@@ -1,4 +1,5 @@
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Created by herbert on 2016-02-04.
@@ -8,7 +9,7 @@ public class IpPacket implements Serializable{
     public IpLocation Ip;
     public int statusCode;
 
-    public IpPacket(String host, String hostName, int port){
+    public IpPacket(String hostName, String host, int port){
         this.hostName = hostName;
         this.Ip = new IpLocation(host, port);
     }
@@ -24,5 +25,13 @@ class IpLocation implements Serializable{
     public IpLocation(String host, int port){
         this.hostAddress = host;
         this.port = port;
+    }
+}
+
+class IpBroadCastPacket implements Serializable{
+    Map<String, IpLocation> mClientTable;
+
+    public IpBroadCastPacket(Map cs){
+        this.mClientTable = cs;
     }
 }

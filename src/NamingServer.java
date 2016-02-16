@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public class NamingServer {
     static Map<String, IpLocation> mClientTable = new Hashtable<>();
-
+    static Map<Socket, ObjectOutputStream> mSocketTable = new Hashtable<>();
 
     public static void main(String[] args) throws IOException {
         boolean listening = true;
@@ -24,7 +24,7 @@ public class NamingServer {
 
         while (listening){
             if (serverSocket != null) {
-                new NamingServerHandlingThread(serverSocket.accept(), mClientTable).start();
+                new NamingServerHandlingThread(serverSocket.accept(), mClientTable, mSocketTable).start();
             }
         }
         serverSocket.close();
@@ -33,10 +33,11 @@ public class NamingServer {
     private static class NamingServerHandlingThread extends Thread{
         private Socket socket = null;
         Map clientMap = null;
-
-        public NamingServerHandlingThread(Socket socket, Map clientMap){
+        Map socketTable;
+        public NamingServerHandlingThread(Socket socket, Map clientMap, Map socketTable){
             this.socket = socket;
             this.clientMap = clientMap;
+            this.socketTable = socketTable;
             System.out.println("new client accepted");
         }
 
@@ -53,8 +54,15 @@ public class NamingServer {
                 String name = packet.hostName;
                 IpLocation Ip = packet.Ip;
                 clientMap.put(name, Ip);
-                IpPacket reply = new IpPacket(200);
-                toClient.writeObject(reply);
+                mSocketTable.put(socket, toClient);
+
+                //broadcast to all
+                for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
+                    ObjectOutputStream oos  = entry.getValue();
+                    Socket socketi = entry.getKey();
+                    oos.writeObject(new IpBroadCastPacket(clientMap));
+                }
+
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }

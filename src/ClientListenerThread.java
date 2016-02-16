@@ -31,7 +31,9 @@ public class ClientListenerThread implements Runnable {
             try{
                 received = (MPacket) mSocket.readObject();
                 System.out.println("Received in clt " + received);
-                
+
+
+
                 //add to incoming queue
                 mIncomingQueue.add(received);
                 MPacket peek = (MPacket)mIncomingQueue.peek();
