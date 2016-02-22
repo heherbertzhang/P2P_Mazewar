@@ -1,11 +1,14 @@
 import java.io.Serializable;
+import java.util.*;
 
 public class MPacket implements Serializable {
 
     /*The following are the type of events*/
     public static final int HELLO = 100;
     public static final int ACTION = 200;
-
+	public static final int RECEIVED = 300;
+	public static final int RELEASED = 400;
+	public static final int CONFIRMATION = 500;
     /*The following are the specific action 
     for each type*/
     /*Initial Hello*/
@@ -42,6 +45,9 @@ public class MPacket implements Serializable {
     //projectile
     //public int projectile;
 
+	//
+	private int timestamp;
+
     public MPacket(int type, int event){
         this.type = type;
         this.event = event;
@@ -52,7 +58,14 @@ public class MPacket implements Serializable {
         this.type = type;
         this.event = event;
     }
-    
+
+	public MPacket(String name, int type, int event, int timestamp){
+        this.name = name;
+        this.type = type;
+        this.event = event;
+		this.timestamp = timestamp;
+    }
+	
     public String toString(){
         String typeStr;
         String eventStr;
@@ -64,6 +77,15 @@ public class MPacket implements Serializable {
             case 200:
                 typeStr = "ACTION";
                 break;
+			case 300:
+				typeStr = "RECEIVED";
+				break;
+			case 400:
+				typeStr = "RELEASED";
+				break;
+			case 500:
+				typeStr = "CONFIRMATION";
+				break;	
             default:
                 typeStr = "ERROR";
                 break;        

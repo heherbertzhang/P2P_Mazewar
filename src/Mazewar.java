@@ -36,6 +36,8 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.Comparator;
+import java.util.PriorityQueue;
 
 /**
  * The entry point and glue code for the game.  It also contains some helpful
@@ -45,8 +47,27 @@ import java.util.concurrent.BlockingQueue;
  * @version $Id: Mazewar.java 371 2004-02-10 21:55:32Z geoffw $
  */
 
-public class Mazewar extends JFrame {
+class PacketComparator implements Comparator<MPacket>{
+    @Override
+    public int compare(MPacket x, MPacket y){
+        if(x.timestamp < y.timestamp){
+            return -1;
+        }
+        else if(x.timestamp > y.timestamp){
+            return 1;
+        }
+		else{
+			return (x.name > y.name)? 1:-1
+				
+		}
+        return 0;
+    }
+}
 
+
+public class Mazewar extends JFrame {
+	private Queue receivedQueue;
+	private Queue displayQueue;
     private Map<String, IpLocation> neighbours;
     private Map<String, MSocket> neighbours_socket;
     public void setNeighbours(Map neighbours) {
@@ -164,7 +185,8 @@ public class Mazewar extends JFrame {
             ClassNotFoundException {
         super("ECE419 Mazewar");
         consolePrintLn("ECE419 Mazewar started!");
-
+		this.receivedQueue = new PriorityBlockingQueue<MPacket>(50, new PacketComparator()) ;
+		this.displayQueue = new LinkedBlockingQueue<MPacket>(50);
         // Create the maze
         maze = new MazeImpl(new Point(mazeWidth, mazeHeight), mazeSeed);
         assert (maze != null);
@@ -199,12 +221,13 @@ public class Mazewar extends JFrame {
         if (Debug.debug) System.out.println("Sending hello");
         mSocket.writeObject(hello);
         if (Debug.debug) System.out.println("hello sent");
-        //Receive response from server
+        
+		//Receive response from server
         MPacket resp = (MPacket) mSocket.readObject();
         if (Debug.debug) System.out.println("Received response from server");
 
         //Initialize queue of events
-        eventQueue = new LinkedBlockingQueue<MPacket>();
+        eventQueue = new LinkedBlock.ingQueue<MPacket>();
         //Initialize hash table of clients to client name
         clientTable = new Hashtable<String, Client>();
 
@@ -307,9 +330,9 @@ public class Mazewar extends JFrame {
     */
     private void startThreads() {
         //Start a new sender thread
-        new Thread(new ClientSenderThread(eventQueue,neighbours_socket)).start();
+        new Thread(new ClientSenderThread(eventQueue,neighbours_socket,receivedQueue)).start();
         //Start a new listener thread
-        new Thread(new ClientListenerThread(mSocket, clientTable)).start();
+        new Thread(new ClientListenerThread(mSocket, clientTable,receivedQueue,displayQueue)).start();
     }
 
 

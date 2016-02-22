@@ -8,11 +8,15 @@ public class ClientListenerThread implements Runnable {
     private MSocket mSocket  =  null;
     private Hashtable<String, Client> clientTable = null;
     private Queue mIncomingQueue = null;
+	private Queue receivedQueue = null;
+	private Queue displayQueue = null;
     public ClientListenerThread( MSocket mSocket,
-                                Hashtable<String, Client> clientTable){
+                                Hashtable<String, Client> clientTable, Queue receivedQueue, Queue displayQueue){
         this.mSocket = mSocket;
         this.clientTable = clientTable;
         this.mIncomingQueue = new PriorityBlockingQueue<MPacket>(10, new PacketComparator());
+		this.receivedQueue = receivedQueue;
+		this.displayQueue = displayQueue;
         
         if(Debug.debug) System.out.println("Instatiating ClientListenerThread");
     }

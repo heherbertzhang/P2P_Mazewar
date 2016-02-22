@@ -7,24 +7,30 @@ public class ClientSenderThread implements Runnable {
 
     private BlockingQueue<MPacket> eventQueue = null;
     private Map<String, MSocket> neighbours_socket;
+	private Queue receivedQueue = null;
     public ClientSenderThread(BlockingQueue eventQueue, Map<String, MSocket> neighbours_socket){
         this.eventQueue = eventQueue;
         this.neighbours_socket = neighbours_socket;
+		this.receivedQueue = receivedQueue;
     }
     
     public void run() {
-        MPacket toServer = null;
+        MPacket toClient = null;
         if(Debug.debug) System.out.println("Starting ClientSenderThread");
         while(true){
             try{                
                 //Take packet from queue
-                toServer = (MPacket)eventQueue.take();
-                if(Debug.debug) System.out.println("Sending " + toServer);
-                //mSocket.writeObject(toServer);
+                toClient = (MPacket)eventQueue.take();
+                if(Debug.debug) System.out.println("Sending " + toClient);
+                //mSocket.writeObject(toClient);
+
+				// first broadcast
+				toClient.type = MPacket.ACTION;
                 for (Map.Entry e : neighbours_socket.entrySet()){
                      MSocket each_client_socket = (MSocket) e.getValue();
-                     each_client_socket.writeObject(toServer);
+                     each_client_socket.writeObject(toClient);
                 }
+				
 
             }catch(InterruptedException e){
                 e.printStackTrace();
