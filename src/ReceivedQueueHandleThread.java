@@ -12,24 +12,26 @@ public class ReceivedQueueHandleThread extends Thread{
     private Queue displayQueue = null;
     private Queue eventQueue = null;
     private Map<String, MSocket> neighbousSockets = null;
-
+    private Queue incomingQueue = null;
     private int mNextSequenceNum = 0;
-    public ReceivedQueueHandleThread(Queue receivedQueue, Queue displayQueue, Queue eventQueue, Map neighbours_socket, Hashtable<String, Client> clientTable){
+    public ReceivedQueueHandleThread(Queue incoming, Queue receivedQueue, Queue displayQueue, Queue eventQueue, Map neighbours_socket, Hashtable<String, Client> clientTable){
         this.mNextSequenceNum = 0;
         this.receivedQueue = receivedQueue;
         this.displayQueue = displayQueue;
         this.neighbousSockets = neighbours_socket;
         this.eventQueue = eventQueue;
         this.clientTable = clientTable;
+        this.incomingQueue = incoming;
     }
     public void run(){
         if(Debug.debug) System.out.println("Starting received queue handle thread");
         while(true){
+            while ()
             boolean isActionInitiator = true;
             if(eventQueue.isEmpty()){
                 isActionInitiator = false;
             }
-            for
+
         }
         Client client = null;
         while(true){

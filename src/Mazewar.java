@@ -62,15 +62,20 @@ class PacketComparator implements Comparator<MPacket>{
 
 
 public class Mazewar extends JFrame {
+    private MServerSocket serverSocket;
 	private Queue receivedQueue;
 	private Queue displayQueue;
     private Map<String, IpLocation> neighbours;
-    private Map<String, MSocket> neighbours_socket;
+    private Map<String, MSocket> clientside_neighbours_socket;
+    private Set<MSocket> serverside_neighbours_socket;
     public void setNeighbours(Map neighbours) {
         this.neighbours = neighbours;
     }
-    public void setNeighbours_socket(Map<String, MSocket> newlist){
-        neighbours_socket = newlist;
+    public void set_client_Neighbours_socket(Map<String, MSocket> newlist){
+        clientside_neighbours_socket = newlist;
+    }
+    public void add_server_Neighbours_socket( MSocket socket){
+        serverside_neighbours_socket.add(socket);
     }
 
 
@@ -181,6 +186,7 @@ public class Mazewar extends JFrame {
             ClassNotFoundException {
         super("ECE419 Mazewar");
         consolePrintLn("ECE419 Mazewar started!");
+        this.serverSocket = new MServerSocket(selfPort);
 		this.receivedQueue = new PriorityBlockingQueue<MPacket>(50, new PacketComparator()) ;
 		this.displayQueue = new LinkedBlockingQueue<MPacket>(50);
         // Create the maze
@@ -205,7 +211,8 @@ public class Mazewar extends JFrame {
         IpPacket ipPacket = new IpPacket(name, InetAddress.getLocalHost().getHostName(), selfPort);
         ObjectOutputStream toNamingServer = new ObjectOutputStream(toNamingServerSocket.getOutputStream());
         toNamingServer.writeObject(ipPacket);
-
+        //start naming server
+        new NamingServerListenerThread(toNamingServerSocket, this).start();
 
         //mSocket = new MSocket(serverHost, serverPort);
         //Send hello packet to server
@@ -340,12 +347,35 @@ public class Mazewar extends JFrame {
     public static void main(String args[]) throws IOException,
             ClassNotFoundException {
 
-        String host = args[0];
-        int port = Integer.parseInt(args[1]);
+        String namingServerhost = args[0];
+        int namingServerPort = Integer.parseInt(args[1]);
         int selfport = Integer.parseInt(args[2]);
              /* Create the GUI */
-        Mazewar mazewar = new Mazewar(host, port, selfport);
+        Mazewar mazewar = new Mazewar(namingServerhost, namingServerPort, selfport);
         mazewar.startThreads();
+
+    }
+}
+
+class ServerSocketHandleThread extends Thread{
+    private MServerSocket serverSocket = null;
+    Mazewar mazewarClient = null;
+
+    public ServerSocketHandleThread(MServerSocket serverSocket, Mazewar mazewarClient) {
+        this.serverSocket = serverSocket;
+        this.mazewarClient = mazewarClient;
+    }
+
+    @Override
+    public void run() {
+        while(true){
+            try {
+                MSocket receivedSocket = serverSocket.accept();
+                mazewarClient.add_server_Neighbours_socket(receivedSocket);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
 
@@ -369,7 +399,7 @@ class NamingServerListenerThread extends Thread {
                 for (Map.Entry e: result.mClientTable.entrySet()){
                     Newsocketlist.put(e.getKey(), new MSocket(((IpLocation)e.getValue()).hostAddress,((IpLocation)e.getValue()).port));
                 }
-                mazewarClient.setNeighbours_socket(Newsocketlist);
+                mazewarClient.set_client_Neighbours_socket(Newsocketlist);
             }
         } catch (IOException e) {
             e.printStackTrace();

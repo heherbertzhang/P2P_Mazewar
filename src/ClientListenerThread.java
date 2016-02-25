@@ -7,16 +7,18 @@ public class ClientListenerThread implements Runnable {
 
     private Map<String, MSocket> neighbours_socket  =  null;
     private Hashtable<String, Client> clientTable = null;
-    private Queue mIncomingQueue = null;
 	private Queue receivedQueue = null;
 	private Queue displayQueue = null;
+    private Queue incomingQueue = null;
+    private Queue eventQueue = null;
     public ClientListenerThread( Map<String, MSocket> neighbours_socket,
-                                Hashtable<String, Client> clientTable, Queue receivedQueue, Queue displayQueue){
+                                Hashtable<String, Client> clientTable, Queue receivedQueue, Queue displayQueue, Queue eventQueue){
         this.neighbours_socket = neighbours_socket;
         this.clientTable = clientTable;
         this.receivedQueue = receivedQueue;
 		this.displayQueue = displayQueue;
-        
+        this.incomingQueue = new LinkedList<MPacket>();
+        this.eventQueue = eventQueue;
         if(Debug.debug) System.out.println("Instatiating ClientListenerThread");
     }
 
@@ -24,7 +26,7 @@ public class ClientListenerThread implements Runnable {
         MPacket received = null;
         
         //run dequeue thread
-        new ReceivedQueueHandleThread(receivedQueue, displayQueue, neighbours_socket, clientTable).start();
+        new ReceivedQueueHandleThread(incomingQueue, receivedQueue, displayQueue, eventQueue, neighbours_socket, clientTable).start();
         
         if(Debug.debug) System.out.println("Starting ClientListenerThread");
         
@@ -34,7 +36,7 @@ public class ClientListenerThread implements Runnable {
             try{
 
                 for (Map.Entry e : neighbours_socket.entrySet()){
-                    received = (MSocket) e.getValue().readObject();
+                    received = (MPacket) ((MSocket)(e.getValue())).readObject();
                     if (received.type == received.ACTION){
                         receivedQueue.add(received);
                     }
