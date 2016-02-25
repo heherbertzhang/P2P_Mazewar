@@ -5,17 +5,16 @@ import java.util.concurrent.PriorityBlockingQueue;
 
 public class ClientListenerThread implements Runnable {
 
-    private MSocket mSocket  =  null;
+    private Map<String, MSocket> neighbours_socket  =  null;
     private Hashtable<String, Client> clientTable = null;
     private Queue mIncomingQueue = null;
 	private Queue receivedQueue = null;
 	private Queue displayQueue = null;
-    public ClientListenerThread( MSocket mSocket,
+    public ClientListenerThread( Map<String, MSocket> neighbours_socket,
                                 Hashtable<String, Client> clientTable, Queue receivedQueue, Queue displayQueue){
-        this.mSocket = mSocket;
+        this.neighbours_socket = neighbours_socket;
         this.clientTable = clientTable;
-        this.mIncomingQueue = new PriorityBlockingQueue<MPacket>(10, new PacketComparator());
-		this.receivedQueue = receivedQueue;
+        this.receivedQueue = receivedQueue;
 		this.displayQueue = displayQueue;
         
         if(Debug.debug) System.out.println("Instatiating ClientListenerThread");
@@ -33,22 +32,17 @@ public class ClientListenerThread implements Runnable {
         
         while(true){
             try{
-                received = (MPacket) mSocket.readObject();
-                System.out.println("Received in clt " + received);
 
-
-
-                //add to incoming queue
-                mIncomingQueue.add(received);
-                MPacket peek = (MPacket)mIncomingQueue.peek();
-                if (Debug.debug) {
-                    if (peek != null) {
-                        System.out.println("adding, current peek is " + peek.sequenceNumber);
-                    } else {
-                        System.out.println("add fail");
+                for (Map.Entry e : neighbours_socket.entrySet()){
+                    received = (MSocket) e.getValue().readObject();
+                    if (received.type == received.ACTION){
+                        receivedQueue.add(received);
                     }
+                    else if (received.type == received.RECEIVED){
+
+                    }
+
                 }
-               
             }catch(IOException e){
                 Thread.currentThread().interrupt();    
             }catch(ClassNotFoundException e){
