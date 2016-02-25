@@ -46,7 +46,7 @@ public class MPacket implements Serializable {
     //public int projectile;
 
 	//
-	private int timestamp;
+	public int timestamp;
 
     public MPacket(int type, int event){
         this.type = type;

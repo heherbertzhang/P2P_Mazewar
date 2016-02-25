@@ -109,6 +109,7 @@ class DequeueThread implements Runnable{
     }
 }
 
+/*
 class PacketComparator implements Comparator<MPacket>{
     @Override
     public int compare(MPacket x, MPacket y){
@@ -120,4 +121,4 @@ class PacketComparator implements Comparator<MPacket>{
         }
         return 0;
     }
-}
+}*/

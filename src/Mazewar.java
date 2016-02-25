@@ -32,12 +32,10 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Hashtable;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.Comparator;
-import java.util.PriorityQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 /**
  * The entry point and glue code for the game.  It also contains some helpful
@@ -57,10 +55,8 @@ class PacketComparator implements Comparator<MPacket>{
             return 1;
         }
 		else{
-			return (x.name > y.name)? 1:-1
-				
+			return x.name.compareTo(y.name);
 		}
-        return 0;
     }
 }
 
@@ -227,7 +223,7 @@ public class Mazewar extends JFrame {
         if (Debug.debug) System.out.println("Received response from server");
 
         //Initialize queue of events
-        eventQueue = new LinkedBlock.ingQueue<MPacket>();
+        eventQueue = new LinkedBlockingQueue<MPacket>();
         //Initialize hash table of clients to client name
         clientTable = new Hashtable<String, Client>();
 
@@ -369,7 +365,7 @@ class NamingServerListenerThread extends Thread {
             while (true) {
                 IpBroadCastPacket result = (IpBroadCastPacket) objectInputStream.readObject();
                 mazewarClient.setNeighbours(result.mClientTable);
-                Map Newsocketlist = new Hashtable<String, MSocket>;
+                Map Newsocketlist = new Hashtable<String, MSocket>();
                 for (Map.Entry e: result.mClientTable.entrySet()){
                     Newsocketlist.put(e.getKey(), new MSocket(((IpLocation)e.getValue()).hostAddress,((IpLocation)e.getValue()).port));
                 }

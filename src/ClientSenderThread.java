@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 
 public class ClientSenderThread implements Runnable {
@@ -8,7 +9,7 @@ public class ClientSenderThread implements Runnable {
     private BlockingQueue<MPacket> eventQueue = null;
     private Map<String, MSocket> neighbours_socket;
 	private Queue receivedQueue = null;
-    public ClientSenderThread(BlockingQueue eventQueue, Map<String, MSocket> neighbours_socket){
+    public ClientSenderThread(BlockingQueue eventQueue, Map<String, MSocket> neighbours_socket, Queue receivedQueue){
         this.eventQueue = eventQueue;
         this.neighbours_socket = neighbours_socket;
 		this.receivedQueue = receivedQueue;
