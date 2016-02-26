@@ -35,6 +35,7 @@ public class MPacket implements Serializable {
     
     //The sequence number of the event
     public int sequenceNumber;
+    public int toConfrimSequenceNumber;
 
     //These are used to initialize the board
     public int mazeSeed;

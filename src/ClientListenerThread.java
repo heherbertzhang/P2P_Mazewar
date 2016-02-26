@@ -1,7 +1,7 @@
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.*;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientListenerThread implements Runnable {
 
@@ -10,15 +10,15 @@ public class ClientListenerThread implements Runnable {
 	private Queue receivedQueue = null;
 	private Queue displayQueue = null;
     private Queue incomingQueue = null;
-    private Queue eventQueue = null;
+    private AtomicInteger actionHoldingCount = null;
     public ClientListenerThread( Map<String, MSocket> neighbours_socket,
-                                Hashtable<String, Client> clientTable, Queue receivedQueue, Queue displayQueue, Queue eventQueue){
+                                Hashtable<String, Client> clientTable, Queue receivedQueue, Queue displayQueue, Queue incomingQueue, AtomicInteger actionHoldingCount){
         this.neighbours_socket = neighbours_socket;
         this.clientTable = clientTable;
         this.receivedQueue = receivedQueue;
 		this.displayQueue = displayQueue;
-        this.incomingQueue = new LinkedList<MPacket>();
-        this.eventQueue = eventQueue;
+        this.incomingQueue = incomingQueue;
+        this.actionHoldingCount = actionHoldingCount;
         if(Debug.debug) System.out.println("Instatiating ClientListenerThread");
     }
 
@@ -26,7 +26,7 @@ public class ClientListenerThread implements Runnable {
         MPacket received = null;
         
         //run dequeue thread
-        new ReceivedQueueHandleThread(incomingQueue, receivedQueue, displayQueue, eventQueue, neighbours_socket, clientTable).start();
+        //new IncomingMessageHandleThread(incomingQueue, receivedQueue, displayQueue, actionHoldingCount, neighbours_socket, clientTable).start();
         
         if(Debug.debug) System.out.println("Starting ClientListenerThread");
         
@@ -37,12 +37,7 @@ public class ClientListenerThread implements Runnable {
 
                 for (Map.Entry e : neighbours_socket.entrySet()){
                     received = (MPacket) ((MSocket)(e.getValue())).readObject();
-                    if (received.type == received.ACTION){
-                        receivedQueue.add(received);
-                    }
-                    else if (received.type == received.RECEIVED){
-
-                    }
+                    incomingQueue.add(received);
 
                 }
             }catch(IOException e){

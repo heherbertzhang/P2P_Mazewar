@@ -18,6 +18,8 @@ USA.
 */
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An abstract class for {@link Client}s in a {@link Maze} that local to the 
@@ -37,14 +39,17 @@ public abstract class LocalClient extends Client {
      */
 
     private BlockingQueue eventQueue = null;
+    public AtomicInteger actionCount;
 
-    public LocalClient(String name, BlockingQueue eventQueue) {
+    public LocalClient(String name, BlockingQueue eventQueue, AtomicInteger actionCount) {
         super(name);
         this.eventQueue = eventQueue;
+        this.actionCount = actionCount;
     }
 
 
     public void addActionEvent(int action) throws InterruptedException {
+        actionCount.incrementAndGet();
         eventQueue.put(new MPacket(getName(), MPacket.ACTION, action));
     }
 

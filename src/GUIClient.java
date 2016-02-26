@@ -20,6 +20,7 @@ USA.
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An implementation of {@link LocalClient} that is controlled by the keyboard
@@ -35,8 +36,8 @@ public class GUIClient extends LocalClient implements KeyListener {
          */
         //private BlockingQueue eventQueue = null;
         
-        public GUIClient(String name, BlockingQueue eventQueue) {
-                super(name, eventQueue);
+        public GUIClient(String name, BlockingQueue eventQueue, AtomicInteger actionCount) {
+                super(name, eventQueue, actionCount);
                 //this.eventQueue = eventQueue;
         }
         

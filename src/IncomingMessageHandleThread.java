@@ -1,0 +1,182 @@
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/**
+ * Created by herbert on 2016-02-25.
+ */
+public class IncomingMessageHandleThread extends Thread {
+
+    private Hashtable<String, Client> clientTable = null;
+    private Queue receivedQueue = null;
+    private Queue displayQueue = null;
+    private AtomicInteger actionHoldingCount = null;
+    private Map<String, MSocket> neighbousSockets = null;
+    private Queue incomingQueue = null;
+    private int mNextSequenceNum = 0;
+    private AtomicInteger currentTimeStamp = null;
+
+    public IncomingMessageHandleThread(Queue incoming, Queue receivedQueue, AtomicInteger actionHoldingCount, Map neighbours_socket, AtomicInteger currentTimeStamp) {
+        this.mNextSequenceNum = 0;
+        this.receivedQueue = receivedQueue;
+        //this.displayQueue = displayQueue;
+        this.neighbousSockets = neighbours_socket;
+        this.actionHoldingCount = actionHoldingCount;
+        this.incomingQueue = incoming;
+        this.currentTimeStamp = currentTimeStamp;
+    }
+
+    public void run() {
+        if (Debug.debug) System.out.println("Starting incoming queue handle thread");
+        //start other threads
+        //new ReceivedThread(receivedQueue, displayQueue, currentTimeStamp, neighbousSockets).start();
+        //new DisplayThread(displayQueue, clientTable).start();
+
+        while (true) {
+            //get the head from incoming queue and then deals with it
+            //check for the type of the message
+            MPacket headMsg = (MPacket) incomingQueue.poll();
+            switch (headMsg.type) {
+                case MPacket.ACTION:
+                    MPacket replyMsg = new MPacket(0, 0);
+                    replyMsg.sequenceNumber = headMsg.sequenceNumber;
+                    replyMsg.timestamp = Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1;
+                    if (actionHoldingCount.get() == 0) {
+                        //can send back release message
+                        replyMsg.type = MPacket.RELEASED;
+
+                    } else {
+                        //send back ack message
+                        replyMsg.type = MPacket.RECEIVED;
+                    }
+                    MSocket mSocket = neighbousSockets.get(headMsg.name);
+                    mSocket.writeObject(replyMsg);
+                    //add to the received queue
+                    PacketInfo packetInfo = new PacketInfo(headMsg);
+                    packetInfo.isAck = true;
+                    if (replyMsg.type == MPacket.RELEASED) {
+                        packetInfo.isReleased = true;
+                    }
+                    receivedQueue.add(packetInfo);
+
+                    break;
+                case MPacket.CONFIRMATION:
+                    //set the message to confirmed on the received queue by finding it first
+                    //but will not remove it from the queue since only the head of the queue can be removed and
+                    //add to the display queue
+                    for (Object p : receivedQueue) {
+                        if (((PacketInfo) p).Packet.name == headMsg.name &&
+                                ((PacketInfo) p).Packet.sequenceNumber == headMsg.toConfrimSequenceNumber) {
+                            ((PacketInfo) p).confirmMsgSequenceNum = headMsg.sequenceNumber;
+                            ((PacketInfo) p).isConfirmed = true;
+                            break;
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+
+}
+
+class ReceivedThread extends Thread {
+    Queue receivedQueue = null;
+    Queue displayQueue = null;
+    AtomicInteger currentTimeStamp = null;
+    Map neighbourSockets = null;
+    List localPlayers = null;
+    AtomicInteger actionHoldingCount = null;
+
+    public ReceivedThread(Queue receivedQueue, Queue displayQueue, AtomicInteger curTimeStamp, Map neighbourSockets, List localPlayers,
+        AtomicInteger actionHoldingCount) {
+        this.receivedQueue = receivedQueue;
+        this.displayQueue = displayQueue;
+        this.currentTimeStamp = curTimeStamp;
+        this.neighbourSockets = neighbourSockets;
+        this.localPlayers = localPlayers;
+        this.actionHoldingCount = actionHoldingCount;
+    }
+
+    @Override
+    public void run() {
+        //get the head of received queue and check whether it is released or not
+        //if it is released then don't do anything otherwise send back release message
+        if (Debug.debug) System.out.println("Starting received queue thread");
+        while (true) {
+            PacketInfo peek = (PacketInfo) receivedQueue.peek();
+            if (peek == null) {
+                continue;
+            }
+            if (peek.isReleased == false) {
+                MPacket replyMsg = new MPacket(MPacket.RELEASED, 0);
+                replyMsg.sequenceNumber = peek.Packet.sequenceNumber;
+                replyMsg.timestamp = Math.max(currentTimeStamp.get(), peek.Packet.timestamp) + 1;
+                MSocket mSocket = (MSocket) neighbourSockets.get(peek.Packet.name);
+                mSocket.writeObject(replyMsg);
+            }
+            if (peek.isConfirmed) {
+                //confrimed so we can remove the msg
+
+                MPacket replyMsg = new MPacket(MPacket.RECEIVED, 0);
+                replyMsg.sequenceNumber = peek.confirmMsgSequenceNum;
+                replyMsg.timestamp = Math.max(currentTimeStamp.get(), peek.Packet.timestamp) + 1;
+                MSocket mSocket = (MSocket) neighbourSockets.get(peek.Packet.name);
+                mSocket.writeObject(replyMsg);
+
+                //remove and add to display queue
+                PacketInfo removed = (PacketInfo) receivedQueue.poll();
+                displayQueue.add(removed.Packet);
+
+                //decrease the action holding count
+                if (localPlayers.contains(removed.Packet.name)) {
+                    actionHoldingCount.decrementAndGet();
+                }
+            }
+        }
+    }
+}
+
+
+class DisplayThread extends Thread {
+    private Queue displayQueue;
+    private Map clientTable;
+
+    public DisplayThread(Queue displayQueue, Map clientTable) {
+        this.displayQueue = displayQueue;
+        this.clientTable = clientTable;
+    }
+
+    public void run() {
+        if (Debug.debug) System.out.println("Starting display queue thread");
+        Client client = null;
+        while (true) {
+            MPacket poll = (MPacket) displayQueue.poll();
+
+
+            if (Debug.debug) System.out.println("ready to take action");
+            client = (Client) clientTable.get(poll.name);
+            if (poll.event == MPacket.UP) {
+                client.forward();
+            } else if (poll.event == MPacket.DOWN) {
+                client.backup();
+            } else if (poll.event == MPacket.LEFT) {
+                client.turnLeft();
+            } else if (poll.event == MPacket.RIGHT) {
+                client.turnRight();
+            } else if (poll.event == MPacket.FIRE) {
+                System.out.println(client.getName() + " about to call fire()");
+                client.fire();
+            } else if (poll.event == MPacket.DIE) {
+                Player newPosition = poll.players[0];
+                Client sourceClient = (Client) clientTable.get(poll.players[1].name);
+                //Client destClient = clientTable.get(newPosition.name);
+                client.die(sourceClient, newPosition);
+            } else if (poll.event == MPacket.MOVE_BULLET) {
+                //int prj = received.projectile;
+                String prj = poll.name;
+                client.bullet_move(prj);
+            } else {
+                throw new UnsupportedOperationException();
+            }
+        }
+    }
+}

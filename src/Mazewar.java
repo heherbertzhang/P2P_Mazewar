@@ -20,7 +20,6 @@ USA.
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
-import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JOptionPane;
 import java.awt.GridBagLayout;
@@ -29,13 +28,13 @@ import javax.swing.BorderFactory;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The entry point and glue code for the game.  It also contains some helpful
@@ -65,9 +64,12 @@ public class Mazewar extends JFrame {
     private MServerSocket serverSocket;
 	private Queue receivedQueue;
 	private Queue displayQueue;
+    private Queue incomingQueue;
+    private List localPlayers = null;
     private Map<String, IpLocation> neighbours;
     private Map<String, MSocket> clientside_neighbours_socket;
     private Set<MSocket> serverside_neighbours_socket;
+    private AtomicInteger actionHoldingCount;
     public void setNeighbours(Map neighbours) {
         this.neighbours = neighbours;
     }
@@ -186,9 +188,17 @@ public class Mazewar extends JFrame {
             ClassNotFoundException {
         super("ECE419 Mazewar");
         consolePrintLn("ECE419 Mazewar started!");
+
+        /*
+        * instantiate all of the needed structures
+        * */
         this.serverSocket = new MServerSocket(selfPort);
 		this.receivedQueue = new PriorityBlockingQueue<MPacket>(50, new PacketComparator()) ;
 		this.displayQueue = new LinkedBlockingQueue<MPacket>(50);
+        this.incomingQueue =  new LinkedList<MPacket>();
+        this.actionHoldingCount = new AtomicInteger(0);
+        this.localPlayers = new LinkedList<String>();
+
         // Create the maze
         maze = new MazeImpl(new Point(mazeWidth, mazeHeight), mazeSeed);
         assert (maze != null);
@@ -240,7 +250,11 @@ public class Mazewar extends JFrame {
             if (player.name.equals(name)) {
                 if (Debug.debug) System.out.println("Adding guiClient: " + player);
                 //create new client for current player
-                guiClient = new GUIClient(name, eventQueue);
+                guiClient = new GUIClient(name, eventQueue, this.actionHoldingCount);
+
+                //put for the local player list
+                localPlayers.add(guiClient.getName());
+
                 //register maze
                 maze.addClientAt(guiClient, player.point, player.direction);
                 this.addKeyListener(guiClient);
@@ -259,6 +273,7 @@ public class Mazewar extends JFrame {
                 /*
                 {
                         maze.addClient(new RobotClient("Norby"));
+                        //localPlayer.add("Norby")
                         maze.addClient(new RobotClient("Robbie"));
                         maze.addClient(new RobotClient("Clango"));
                         maze.addClient(new RobotClient("Marvin"));
@@ -332,10 +347,16 @@ public class Mazewar extends JFrame {
      listening for events
     */
     private void startThreads() {
+        new ServerSocketHandleThread(serverSocket, this).start();
         //Start a new sender thread
-        new Thread(new ClientSenderThread(eventQueue,neighbours_socket,receivedQueue)).start();
+        new Thread(new ClientSenderThread(eventQueue,serverside_neighbours_socket,receivedQueue)).start();
         //Start a new listener thread
-        new Thread(new ClientListenerThread(mSocket, clientTable,receivedQueue,displayQueue)).start();
+        new Thread(new ClientListenerThread(clientside_neighbours_socket, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
+
+        AtomicInteger curTimeStamp = new AtomicInteger(0);
+        new IncomingMessageHandleThread(incomingQueue, receivedQueue, actionHoldingCount, clientside_neighbours_socket,curTimeStamp);
+        new ReceivedThread(receivedQueue, displayQueue, curTimeStamp, clientside_neighbours_socket, localPlayers, actionHoldingCount);
+        new DisplayThread(displayQueue, clientTable);
     }
 
 
