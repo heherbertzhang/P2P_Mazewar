@@ -38,7 +38,6 @@ public class ClientListenerThread implements Runnable {
                 for (Map.Entry e : neighbours_socket.entrySet()){
                     received = (MPacket) ((MSocket)(e.getValue())).readObject();
                     incomingQueue.add(received);
-
                 }
             }catch(IOException e){
                 Thread.currentThread().interrupt();    
