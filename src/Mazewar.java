@@ -71,10 +71,12 @@ public class Mazewar extends JFrame {
     private AtomicInteger actionHoldingCount;
     private AtomicInteger numberOfPlayers;
     private AtomicInteger curTimeStamp;
+    private Hashtable<Integer,SenderPacketInfo> waitToResendQueue;
 
     public void addNeighbours(String name, IpLocation neighbours) {
         this.neighbours.put(name, neighbours);
-    private Hashtable<Integer,SenderPacketInfo> waitToResendQueue;
+    }
+
     public void setNeighbours(Map<String, IpLocation> neighbours) {
         this.neighbours = neighbours;
     }
@@ -358,7 +360,7 @@ public class Mazewar extends JFrame {
     private void startThreads() {
         new ServerSocketHandleThread(serverSocket, this, incomingQueue).start();
         //Start a new sender thread
-        new Thread(new ClientSenderThread(eventQueue, socketsForBroadcast, receivedQueue, waitToResendQueue)).start();
+        new Thread(new ClientSenderThread(eventQueue, socketsForBroadcast, receivedQueue, curTimeStamp, waitToResendQueue)).start();
         //Start a new listener thread
         //new Thread(new ClientListenerThread(socketsForBroadcast, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
 
