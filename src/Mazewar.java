@@ -74,6 +74,9 @@ public class Mazewar extends JFrame {
 
     public void addNeighbours(String name, IpLocation neighbours) {
         this.neighbours.put(name, neighbours);
+    private Hashtable<Integer,SenderPacketInfo> waitToResendQueue;
+    public void setNeighbours(Map<String, IpLocation> neighbours) {
+        this.neighbours = neighbours;
     }
     public void set_neighbour_sockets_list_for_sender(Map<String, MSocket> newlist){
         socketsForBroadcast = newlist;
@@ -195,6 +198,7 @@ public class Mazewar extends JFrame {
         /*
         * instantiate all of the needed structures
         * */
+        this.waitToResendQueue = new Hashtable<Integer,SenderPacketInfo>();
         this.serverSocket = new MServerSocket(selfPort);
 		this.receivedQueue = new PriorityBlockingQueue<MPacket>(50, new PacketComparator()) ;
 		this.displayQueue = new LinkedBlockingQueue<MPacket>(50);
@@ -354,7 +358,7 @@ public class Mazewar extends JFrame {
     private void startThreads() {
         new ServerSocketHandleThread(serverSocket, this, incomingQueue).start();
         //Start a new sender thread
-        new Thread(new ClientSenderThread(eventQueue, socketsForBroadcast, receivedQueue)).start();
+        new Thread(new ClientSenderThread(eventQueue, socketsForBroadcast, receivedQueue, waitToResendQueue)).start();
         //Start a new listener thread
         //new Thread(new ClientListenerThread(socketsForBroadcast, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
 
