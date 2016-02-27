@@ -8,17 +8,13 @@ public class IncomingMessageHandleThread extends Thread {
 
     private Hashtable<String, Client> clientTable = null;
     private Queue receivedQueue = null;
-    private Queue displayQueue = null;
     private AtomicInteger actionHoldingCount = null;
     private Map<String, MSocket> neighbousSockets = null;
-    private Queue incomingQueue = null;
-    private int mNextSequenceNum = 0;
+    private Queue<MPacket> incomingQueue = null;
     private AtomicInteger currentTimeStamp = null;
 
-    public IncomingMessageHandleThread(Queue incoming, Queue receivedQueue, AtomicInteger actionHoldingCount, Map neighbours_socket, AtomicInteger currentTimeStamp) {
-        this.mNextSequenceNum = 0;
+    public IncomingMessageHandleThread(Queue<MPacket> incoming, Queue receivedQueue, AtomicInteger actionHoldingCount, Map<String, MSocket> neighbours_socket, AtomicInteger currentTimeStamp) {
         this.receivedQueue = receivedQueue;
-        //this.displayQueue = displayQueue;
         this.neighbousSockets = neighbours_socket;
         this.actionHoldingCount = actionHoldingCount;
         this.incomingQueue = incoming;
@@ -34,7 +30,7 @@ public class IncomingMessageHandleThread extends Thread {
         while (true) {
             //get the head from incoming queue and then deals with it
             //check for the type of the message
-            MPacket headMsg = (MPacket) incomingQueue.poll();
+            MPacket headMsg = incomingQueue.poll();
             switch (headMsg.type) {
                 case MPacket.ACTION:
                     MPacket replyMsg = new MPacket(0, 0);
@@ -68,7 +64,7 @@ public class IncomingMessageHandleThread extends Thread {
                     //but will not remove it from the queue since only the head of the queue can be removed and
                     //add to the display queue
                     for (Object p : receivedQueue) {
-                        if (((PacketInfo) p).Packet.name == headMsg.name &&
+                        if (((PacketInfo) p).Packet.name.equals(headMsg.name) &&
                                 ((PacketInfo) p).Packet.sequenceNumber == headMsg.toConfrimSequenceNumber) {
                             ((PacketInfo) p).confirmMsgSequenceNum = headMsg.sequenceNumber;
                             ((PacketInfo) p).isConfirmed = true;
@@ -84,14 +80,14 @@ public class IncomingMessageHandleThread extends Thread {
 
 class ReceivedThread extends Thread {
     Queue receivedQueue = null;
-    Queue displayQueue = null;
+    Queue<MPacket> displayQueue = null;
     AtomicInteger currentTimeStamp = null;
-    Map neighbourSockets = null;
-    List localPlayers = null;
+    Map<String, MSocket> neighbourSockets = null;
+    List<String> localPlayers = null;
     AtomicInteger actionHoldingCount = null;
 
-    public ReceivedThread(Queue receivedQueue, Queue displayQueue, AtomicInteger curTimeStamp, Map neighbourSockets, List localPlayers,
-        AtomicInteger actionHoldingCount) {
+    public ReceivedThread(Queue receivedQueue, Queue<MPacket> displayQueue, AtomicInteger curTimeStamp, Map<String, MSocket> neighbourSockets, List<String> localPlayers,
+                          AtomicInteger actionHoldingCount) {
         this.receivedQueue = receivedQueue;
         this.displayQueue = displayQueue;
         this.currentTimeStamp = curTimeStamp;
@@ -110,11 +106,11 @@ class ReceivedThread extends Thread {
             if (peek == null) {
                 continue;
             }
-            if (peek.isReleased == false) {
+            if (!peek.isReleased) {
                 MPacket replyMsg = new MPacket(MPacket.RELEASED, 0);
                 replyMsg.sequenceNumber = peek.Packet.sequenceNumber;
                 replyMsg.timestamp = Math.max(currentTimeStamp.get(), peek.Packet.timestamp) + 1;
-                MSocket mSocket = (MSocket) neighbourSockets.get(peek.Packet.name);
+                MSocket mSocket = neighbourSockets.get(peek.Packet.name);
                 mSocket.writeObject(replyMsg);
             }
             if (peek.isConfirmed) {
@@ -123,7 +119,7 @@ class ReceivedThread extends Thread {
                 MPacket replyMsg = new MPacket(MPacket.RECEIVED, 0);
                 replyMsg.sequenceNumber = peek.confirmMsgSequenceNum;
                 replyMsg.timestamp = Math.max(currentTimeStamp.get(), peek.Packet.timestamp) + 1;
-                MSocket mSocket = (MSocket) neighbourSockets.get(peek.Packet.name);
+                MSocket mSocket = neighbourSockets.get(peek.Packet.name);
                 mSocket.writeObject(replyMsg);
 
                 //remove and add to display queue
@@ -141,10 +137,10 @@ class ReceivedThread extends Thread {
 
 
 class DisplayThread extends Thread {
-    private Queue displayQueue;
-    private Map clientTable;
+    private Queue<MPacket> displayQueue;
+    private Map<String, Client> clientTable;
 
-    public DisplayThread(Queue displayQueue, Map clientTable) {
+    public DisplayThread(Queue<MPacket> displayQueue, Map<String, Client> clientTable) {
         this.displayQueue = displayQueue;
         this.clientTable = clientTable;
     }
@@ -153,11 +149,11 @@ class DisplayThread extends Thread {
         if (Debug.debug) System.out.println("Starting display queue thread");
         Client client = null;
         while (true) {
-            MPacket poll = (MPacket) displayQueue.poll();
+            MPacket poll = displayQueue.poll();
 
 
             if (Debug.debug) System.out.println("ready to take action");
-            client = (Client) clientTable.get(poll.name);
+            client = clientTable.get(poll.name);
             if (poll.event == MPacket.UP) {
                 client.forward();
             } else if (poll.event == MPacket.DOWN) {
@@ -171,7 +167,7 @@ class DisplayThread extends Thread {
                 client.fire();
             } else if (poll.event == MPacket.DIE) {
                 Player newPosition = poll.players[0];
-                Client sourceClient = (Client) clientTable.get(poll.players[1].name);
+                Client sourceClient = clientTable.get(poll.players[1].name);
                 //Client destClient = clientTable.get(newPosition.name);
                 client.die(sourceClient, newPosition);
             } else if (poll.event == MPacket.MOVE_BULLET) {
