@@ -11,54 +11,56 @@ public class ClientSenderThread implements Runnable {
 
     private BlockingQueue<MPacket> eventQueue = null;
     private Map<String, MSocket> neighbours_socket;
-    private int squenceNumber;
-	private Queue receivedQueue = null;
+    private AtomicInteger squenceNumber;
+    private Queue receivedQueue = null;
     private AtomicInteger lamportClock;
-    private Hashtable<Integer,SenderPacketInfo> waitingToResend;
-    public ClientSenderThread(BlockingQueue eventQueue, Map<String, MSocket> neighbours_socket, Queue receivedQueue, AtomicInteger lamportClock, Hashtable<Integer,SenderPacketInfo> waitingToResend){
+    private Hashtable<Integer, SenderPacketInfo> waitingToResend;
+
+    public ClientSenderThread(AtomicInteger sequencenumber,BlockingQueue eventQueue, Map<String, MSocket> neighbours_socket, Queue receivedQueue, AtomicInteger lamportClock, Hashtable<Integer, SenderPacketInfo> waitingToResend) {
         this.eventQueue = eventQueue;
         this.neighbours_socket = neighbours_socket;
-		this.receivedQueue = receivedQueue;
+        this.receivedQueue = receivedQueue;
         this.lamportClock = lamportClock;
         this.waitingToResend = waitingToResend;
-        this.squenceNumber = 0;
-
+        this.squenceNumber = sequencenumber;
     }
-    
+
     public void run() {
         MPacket toClient = null;
-        if(Debug.debug) System.out.println("Starting ClientSenderThread");
-        while(true){
-            try{                
-                //Take packet from queue
-                toClient = (MPacket)eventQueue.take();
-                if(Debug.debug) System.out.println("Sending " + toClient);
-                //mSocket.writeObject(toClient);
-                this.squenceNumber = this.squenceNumber + 1;
+        if (Debug.debug) System.out.println("Starting ClientSenderThread");
 
-				// first broadcast
+        try {
+            while (true) {
+                //Take packet from queue
+                toClient = (MPacket) eventQueue.take();
+                if (Debug.debug) System.out.println("Sending " + toClient);
+                //mSocket.writeObject(toClient);
+
+
+                // first broadcast
                 toClient.timestamp = lamportClock.incrementAndGet();
-                toClient.sequenceNumber = this.squenceNumber;
+                toClient.sequenceNumber = this.squenceNumber.incrementAndGet();;
 
                 //Initlize packet
-                Hashtable<String, Boolean> All_neighbour = new Hashtable <String, Boolean>();
-                for (Map.Entry<String, MSocket> e: this.neighbours_socket.entrySet()){
+                Hashtable<String, Boolean> All_neighbour = new Hashtable<String, Boolean>();
+                for (Map.Entry<String, MSocket> e : this.neighbours_socket.entrySet()) {
                     All_neighbour.put(e.getKey(), false);
                 }
 
                 // Initlize time
                 long time = System.currentTimeMillis();
-                SenderPacketInfo info = new SenderPacketInfo(All_neighbour, this.squenceNumber, time,toClient);
-                for (Map.Entry e : neighbours_socket.entrySet()){
-                     MSocket each_client_socket = (MSocket) e.getValue();
-                     each_client_socket.writeObject(toClient);
+                SenderPacketInfo info = new SenderPacketInfo(All_neighbour, this.squenceNumber.get(), time, toClient);
+                for (Map.Entry e : neighbours_socket.entrySet()) {
+                    MSocket each_client_socket = (MSocket) e.getValue();
+                    each_client_socket.writeObject(toClient);
                 }
-            }catch(InterruptedException e){
-                e.printStackTrace();
-                Thread.currentThread().interrupt();    
             }
-            
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
+
+
     }
 }
 

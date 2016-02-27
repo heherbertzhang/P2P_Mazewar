@@ -71,7 +71,10 @@ public class Mazewar extends JFrame {
     private AtomicInteger actionHoldingCount;
     private AtomicInteger numberOfPlayers;
     private AtomicInteger curTimeStamp;
+    private AtomicInteger sequenceNumber;
     private Hashtable<Integer,SenderPacketInfo> waitToResendQueue;
+    private BlockingQueue<MPacket> confirmationQueue;
+
 
     public void addNeighbours(String name, IpLocation neighbours) {
         this.neighbours.put(name, neighbours);
@@ -209,6 +212,8 @@ public class Mazewar extends JFrame {
         this.localPlayers = new LinkedList<String>();
         this.numberOfPlayers = new AtomicInteger(0);
         this.curTimeStamp = new AtomicInteger(0);
+        this.sequenceNumber = new AtomicInteger(0);
+        this.confirmationQueue= new LinkedBlockingQueue <MPacket>();
 
         // Create the maze
         maze = new MazeImpl(new Point(mazeWidth, mazeHeight), mazeSeed);
@@ -360,7 +365,7 @@ public class Mazewar extends JFrame {
     private void startThreads() {
         new ServerSocketHandleThread(serverSocket, this, incomingQueue).start();
         //Start a new sender thread
-        new Thread(new ClientSenderThread(eventQueue, socketsForBroadcast, receivedQueue, curTimeStamp, waitToResendQueue)).start();
+        new Thread(new ClientSenderThread(sequenceNumber,eventQueue, socketsForBroadcast, receivedQueue, curTimeStamp, waitToResendQueue)).start();
         //Start a new listener thread
         //new Thread(new ClientListenerThread(socketsForBroadcast, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
 
