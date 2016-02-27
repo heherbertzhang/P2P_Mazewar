@@ -9,10 +9,12 @@ public class ClientSenderThread implements Runnable {
     private BlockingQueue<MPacket> eventQueue = null;
     private Map<String, MSocket> neighbours_socket;
 	private Queue receivedQueue = null;
-    public ClientSenderThread(BlockingQueue eventQueue, Map<String, MSocket> neighbours_socket, Queue receivedQueue){
+    private string localname ;
+    public ClientSenderThread(BlockingQueue eventQueue, Map<String, MSocket> neighbours_socket, Queue receivedQueue, string name){
         this.eventQueue = eventQueue;
         this.neighbours_socket = neighbours_socket;
 		this.receivedQueue = receivedQueue;
+        this.localname = name;
     }
     
     public void run() {
@@ -27,10 +29,12 @@ public class ClientSenderThread implements Runnable {
 
 				// first broadcast
 				toClient.type = MPacket.ACTION;
+                toClient.name = localname;
                 for (Map.Entry e : neighbours_socket.entrySet()){
                      MSocket each_client_socket = (MSocket) e.getValue();
                      each_client_socket.writeObject(toClient);
                 }
+
 				
 
             }catch(InterruptedException e){
@@ -41,3 +45,5 @@ public class ClientSenderThread implements Runnable {
         }
     }
 }
+
+
