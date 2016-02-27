@@ -42,7 +42,7 @@ public class ClientSenderThread implements Runnable {
                 //Initlize packet
                 Hashtable<String, Boolean> All_neighbour = new Hashtable <String, Boolean>();
                 for (Map.Entry<String, MSocket> e: this.neighbours_socket.entrySet()){
-                    neighbours_socket.put(e.getKey(), False);
+                    All_neighbour.put(e.getKey(), false);
                 }
 
 
