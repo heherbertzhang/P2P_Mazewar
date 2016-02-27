@@ -85,7 +85,7 @@ public class Mazewar extends JFrame {
     }
     public void add_neighbour_socket_for_sender( String name, MSocket socket){
         socketsForBroadcast.put(name, socket);
-        numberOfPlayers.incrementAndGet();
+        numberOfPlayers.incrementAndGet(); // TODO: 2016-02-27 need to decrement when dynamic disconnect
     }
 
 
@@ -364,7 +364,7 @@ public class Mazewar extends JFrame {
         //Start a new listener thread
         //new Thread(new ClientListenerThread(socketsForBroadcast, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
 
-        new IncomingMessageHandleThread(incomingQueue, receivedQueue, actionHoldingCount, socketsForBroadcast,curTimeStamp);
+        new IncomingMessageHandleThread(incomingQueue, receivedQueue, waitToResendQueue, actionHoldingCount, socketsForBroadcast,curTimeStamp);
         new ReceivedThread(receivedQueue, displayQueue, curTimeStamp, socketsForBroadcast, localPlayers, actionHoldingCount);
         new DisplayThread(displayQueue, clientTable);
     }
