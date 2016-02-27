@@ -48,7 +48,7 @@ public class ClientSenderThread implements Runnable {
 
                 // Initlize time
                 long time = System.currentTimeMillis();
-                SenderPacketInfo info = new SenderPacketInfo(All_neighbour, this.squenceNumber, time);
+                SenderPacketInfo info = new SenderPacketInfo(All_neighbour, this.squenceNumber, time,toClient);
                 for (Map.Entry e : neighbours_socket.entrySet()){
                      MSocket each_client_socket = (MSocket) e.getValue();
                      each_client_socket.writeObject(toClient);

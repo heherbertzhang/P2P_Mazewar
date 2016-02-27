@@ -21,6 +21,7 @@ import java.util.Random;
 import java.util.Vector;
 import java.lang.Runnable;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A very naive implementation of a computer controlled {@link LocalClient}.  Basically
@@ -52,8 +53,8 @@ public class RobotClient extends LocalClient implements Runnable {
          * Create a computer controlled {@link LocalClient}.
          * @param name The name of this {@link RobotClient}.
          */
-        public RobotClient(String name, BlockingQueue queue) {
-                super(name, queue);
+        public RobotClient(String name, BlockingQueue queue, AtomicInteger actionCount) {
+                super(name, queue, actionCount);
                 assert(name != null);
                 // Create our thread
                 thread = new Thread(this);
