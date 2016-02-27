@@ -39,25 +39,20 @@ public class ClientSenderThread implements Runnable {
 				// first broadcast
                 toClient.timestamp = lamportClock.incrementAndGet();
                 toClient.sequenceNumber = this.squenceNumber;
+
                 //Initlize packet
                 Hashtable<String, Boolean> All_neighbour = new Hashtable <String, Boolean>();
                 for (Map.Entry<String, MSocket> e: this.neighbours_socket.entrySet()){
                     All_neighbour.put(e.getKey(), false);
                 }
 
-
                 // Initlize time
                 long time = System.currentTimeMillis();
                 SenderPacketInfo info = new SenderPacketInfo(All_neighbour, this.squenceNumber, time);
-
-
                 for (Map.Entry e : neighbours_socket.entrySet()){
                      MSocket each_client_socket = (MSocket) e.getValue();
                      each_client_socket.writeObject(toClient);
                 }
-
-				
-
             }catch(InterruptedException e){
                 e.printStackTrace();
                 Thread.currentThread().interrupt();    
