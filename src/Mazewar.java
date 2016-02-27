@@ -62,22 +62,21 @@ class PacketComparator implements Comparator<MPacket>{
 
 public class Mazewar extends JFrame {
     private MServerSocket serverSocket;
-	private Queue receivedQueue;
-	private Queue displayQueue;
-    private Queue incomingQueue;
-    private List localPlayers = null;
+	private Queue<MPacket> receivedQueue;
+	private Queue<MPacket> displayQueue;
+    private Queue<MPacket> incomingQueue;
+    private List<String> localPlayers = null;
     private Map<String, IpLocation> neighbours;
-    private Map<String, MSocket> clientside_neighbours_socket;
-    private Set<MSocket> serverside_neighbours_socket;
+    private Map<String, MSocket> socketsForBroadcast;
     private AtomicInteger actionHoldingCount;
-    public void setNeighbours(Map neighbours) {
+    public void setNeighbours(Map<String, IpLocation> neighbours) {
         this.neighbours = neighbours;
     }
-    public void set_client_Neighbours_socket(Map<String, MSocket> newlist){
-        clientside_neighbours_socket = newlist;
+    public void set_neighbour_sockets_list_for_sender(Map<String, MSocket> newlist){
+        socketsForBroadcast = newlist;
     }
-    public void add_server_Neighbours_socket( MSocket socket){
-        serverside_neighbours_socket.add(socket);
+    public void add_neighbour_socket_for_sender( String name, MSocket socket){
+        socketsForBroadcast.put(name, socket);
     }
 
 
@@ -125,7 +124,7 @@ public class Mazewar extends JFrame {
     /**
      * A queue of events.
      */
-    private BlockingQueue eventQueue = null;
+    private BlockingQueue<MPacket> eventQueue = null;
 
     /**
      * The panel that displays the {@link Maze}.
@@ -347,15 +346,15 @@ public class Mazewar extends JFrame {
      listening for events
     */
     private void startThreads() {
-        new ServerSocketHandleThread(serverSocket, this).start();
+        new ServerSocketHandleThread(serverSocket, this, incomingQueue).start();
         //Start a new sender thread
-        new Thread(new ClientSenderThread(eventQueue,serverside_neighbours_socket,receivedQueue)).start();
+        new Thread(new ClientSenderThread(eventQueue, socketsForBroadcast, receivedQueue)).start();
         //Start a new listener thread
-        new Thread(new ClientListenerThread(clientside_neighbours_socket, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
+        //new Thread(new ClientListenerThread(socketsForBroadcast, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
 
         AtomicInteger curTimeStamp = new AtomicInteger(0);
-        new IncomingMessageHandleThread(incomingQueue, receivedQueue, actionHoldingCount, clientside_neighbours_socket,curTimeStamp);
-        new ReceivedThread(receivedQueue, displayQueue, curTimeStamp, clientside_neighbours_socket, localPlayers, actionHoldingCount);
+        new IncomingMessageHandleThread(incomingQueue, receivedQueue, actionHoldingCount, socketsForBroadcast,curTimeStamp);
+        new ReceivedThread(receivedQueue, displayQueue, curTimeStamp, socketsForBroadcast, localPlayers, actionHoldingCount);
         new DisplayThread(displayQueue, clientTable);
     }
 
@@ -381,18 +380,24 @@ public class Mazewar extends JFrame {
 class ServerSocketHandleThread extends Thread{
     private MServerSocket serverSocket = null;
     Mazewar mazewarClient = null;
+    Queue<MPacket> incomingQueue = null;
 
-    public ServerSocketHandleThread(MServerSocket serverSocket, Mazewar mazewarClient) {
+    public ServerSocketHandleThread(MServerSocket serverSocket, Mazewar mazewarClient, Queue<MPacket> incomingQueue) {
         this.serverSocket = serverSocket;
         this.mazewarClient = mazewarClient;
+        this.incomingQueue = incomingQueue;
     }
 
     @Override
     public void run() {
         while(true){
             try {
+                /*
+                * start new listener for each new player connection request
+                * */
                 MSocket receivedSocket = serverSocket.accept();
-                mazewarClient.add_server_Neighbours_socket(receivedSocket);
+                new Thread(new ClientListenerThread(incomingQueue, receivedSocket)).start();
+                //mazewarClient.add_server_Neighbours_socket(receivedSocket);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -416,11 +421,11 @@ class NamingServerListenerThread extends Thread {
             while (true) {
                 IpBroadCastPacket result = (IpBroadCastPacket) objectInputStream.readObject();
                 mazewarClient.setNeighbours(result.mClientTable);
-                Map Newsocketlist = new Hashtable<String, MSocket>();
-                for (Map.Entry e: result.mClientTable.entrySet()){
-                    Newsocketlist.put(e.getKey(), new MSocket(((IpLocation)e.getValue()).hostAddress,((IpLocation)e.getValue()).port));
+                Map<String, MSocket> Newsocketlist = new Hashtable<String, MSocket>();
+                for (Map.Entry<String, IpLocation> e: result.mClientTable.entrySet()){
+                    Newsocketlist.put(e.getKey(), new MSocket((e.getValue()).hostAddress,(e.getValue()).port));
                 }
-                mazewarClient.set_client_Neighbours_socket(Newsocketlist);
+                mazewarClient.set_neighbour_sockets_list_for_sender(Newsocketlist);
             }
         } catch (IOException e) {
             e.printStackTrace();
