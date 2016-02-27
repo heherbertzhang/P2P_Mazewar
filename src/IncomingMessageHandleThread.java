@@ -42,18 +42,40 @@ public class IncomingMessageHandleThread extends Thread {
                     replyMsg.sequenceNumber = headMsg.sequenceNumber;
                     currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
                     replyMsg.timestamp = currentTimeStamp.get();
-                    if (actionHoldingCount.get() == 0) {
-                        //can send back release message
-                        replyMsg.type = MPacket.RELEASED;
+                    boolean isDuplicated = avoidRepeatenceHelper.checkRepeatenceForProcess(headMsg.name, headMsg.sequenceNumber);
+                    if(!isDuplicated) {
+                        if (actionHoldingCount.get() == 0) {
+                            //can send back release message
+                            replyMsg.type = MPacket.RELEASED;
 
-                    } else {
-                        //send back ack message
-                        replyMsg.type = MPacket.RECEIVED;
+                        } else {
+                            //send back ack message
+                            replyMsg.type = MPacket.RECEIVED;
+                        }
+                    }
+                    else {
+                        //duplicate message need to check for the head of the queue to determine to resend ack or released msg
+                        //find the message first
+                        PacketInfo packetInfo = (PacketInfo) receivedQueue.peek();
+                        if(packetInfo.Packet.sequenceNumber == headMsg.sequenceNumber){
+                            replyMsg.type = MPacket.RELEASED;
+                        }
+                        else {
+                            replyMsg.type = MPacket.RECEIVED;
+                        }
+                        //TODO: the following is more accurate method to check but may take more time?
+                        /*for(Object packetInfo : receivedQueue){
+                            if(((PacketInfo) packetInfo).Packet.sequenceNumber == headMsg.sequenceNumber){
+                                if(((PacketInfo) packetInfo).isReleased){
+
+                                }
+                            }
+                        }*/
                     }
                     MSocket mSocket = neighbousSockets.get(headMsg.name);
                     mSocket.writeObject(replyMsg);
                     //add to the received queue
-                    if (!avoidRepeatenceHelper.checkRepeatenceForProcess(headMsg.name, headMsg.sequenceNumber)) {
+                    if (!isDuplicated) {
                         //no repeatence so that we can add to the queue
                         PacketInfo packetInfo = new PacketInfo(headMsg);
                         packetInfo.isAck = true;
@@ -68,13 +90,22 @@ public class IncomingMessageHandleThread extends Thread {
                     SenderPacketInfo senderPacketInfo = resendQueue.get(headMsg.sequenceNumber);
                     if(senderPacketInfo != null) {
                         //check if already acked, do not increase lamport clock TODO
-                        senderPacketInfo.acknowledgeReceivedFrom(headMsg.name);
-
+                        if(!senderPacketInfo.isAckedFrom(headMsg.name)){
+                            currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
+                            senderPacketInfo.acknowledgeReceivedFrom(headMsg.name);
+                        }
                     }
                     break;
                 case MPacket.RELEASED:
                     SenderPacketInfo senderPacketInfo2 = resendQueue.get(headMsg.sequenceNumber);
-                    senderPacketInfo2.getReleasedFrom(headMsg.name);
+                    if(senderPacketInfo2 != null) {
+                        //check if already released, if so do not increase lamport clock TODO
+                        if(!senderPacketInfo2.isGotRleasedFrom(headMsg.name)){
+                            currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
+                            senderPacketInfo2.getReleasedFrom(headMsg.name);
+                        }
+
+                    }
                     break;
                 case MPacket.CONFIRMATION:
                     //set the message to confirmed on the received queue by finding it first

@@ -72,6 +72,7 @@ public class Mazewar extends JFrame {
     private AtomicInteger numberOfPlayers;
     private AtomicInteger curTimeStamp;
     private Hashtable<Integer,SenderPacketInfo> waitToResendQueue;
+    private AvoidRepeatence avoidRepeatenceHelper;
 
     public void addNeighbours(String name, IpLocation neighbours) {
         this.neighbours.put(name, neighbours);
@@ -86,6 +87,7 @@ public class Mazewar extends JFrame {
     public void add_neighbour_socket_for_sender( String name, MSocket socket){
         socketsForBroadcast.put(name, socket);
         numberOfPlayers.incrementAndGet(); // TODO: 2016-02-27 need to decrement when dynamic disconnect
+        avoidRepeatenceHelper.addProccess(name);
     }
 
 
@@ -209,6 +211,8 @@ public class Mazewar extends JFrame {
         this.localPlayers = new LinkedList<String>();
         this.numberOfPlayers = new AtomicInteger(0);
         this.curTimeStamp = new AtomicInteger(0);
+        this.avoidRepeatenceHelper = new AvoidRepeatence();
+
 
         // Create the maze
         maze = new MazeImpl(new Point(mazeWidth, mazeHeight), mazeSeed);
@@ -364,8 +368,10 @@ public class Mazewar extends JFrame {
         //Start a new listener thread
         //new Thread(new ClientListenerThread(socketsForBroadcast, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
 
-        new IncomingMessageHandleThread(incomingQueue, receivedQueue, waitToResendQueue, actionHoldingCount, socketsForBroadcast,curTimeStamp);
-        new ReceivedThread(receivedQueue, displayQueue, curTimeStamp, socketsForBroadcast, localPlayers, actionHoldingCount);
+        new IncomingMessageHandleThread(incomingQueue, receivedQueue, waitToResendQueue,
+                actionHoldingCount, socketsForBroadcast, curTimeStamp, avoidRepeatenceHelper);
+        new ReceivedThread(receivedQueue, displayQueue, curTimeStamp, socketsForBroadcast,
+                localPlayers, actionHoldingCount);
         new DisplayThread(displayQueue, clientTable);
     }
 
