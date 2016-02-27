@@ -53,15 +53,23 @@ public class NamingServer {
                 }
                 String name = packet.hostName;
                 IpLocation Ip = packet.Ip;
-                clientMap.put(name, Ip);
-                mSocketTable.put(socket, toClient);
 
-                //broadcast to all
+                //new client
+                Map newclientMap = new Hashtable<>();
+                newclientMap.put(name, Ip);
+
+                //broadcast to all except this socket about this new player
                 for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
                     ObjectOutputStream oos  = entry.getValue();
-                    Socket socketi = entry.getKey();
-                    oos.writeObject(new IpBroadCastPacket(clientMap));
+                    oos.writeObject(new IpBroadCastPacket(newclientMap));
                 }
+                mSocketTable.put(socket, toClient);//add to broadcast list after broadcast
+
+                //new client receive all other players' ip
+                toClient.writeObject(new IpBroadCastPacket(clientMap));
+
+                clientMap.put(name, Ip);//put new client after send all others
+
 
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();

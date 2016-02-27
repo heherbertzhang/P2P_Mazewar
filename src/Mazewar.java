@@ -69,6 +69,8 @@ public class Mazewar extends JFrame {
     private Map<String, IpLocation> neighbours;
     private Map<String, MSocket> socketsForBroadcast;
     private AtomicInteger actionHoldingCount;
+    public void addNeighbours(String name, IpLocation neighbours) {
+        this.neighbours.put(name, neighbours);
     private Hashtable<Integer,SenderPacketInfo> waitToResendQueue;
     public void setNeighbours(Map<String, IpLocation> neighbours) {
         this.neighbours = neighbours;
@@ -398,7 +400,7 @@ class ServerSocketHandleThread extends Thread{
                 * start new listener for each new player connection request
                 * */
                 MSocket receivedSocket = serverSocket.accept();
-                new Thread(new ClientListenerThread(incomingQueue, receivedSocket,WaitingToResendQueue)).start();
+                new Thread(new ClientListenerThread(incomingQueue, receivedSocket)).start();
                 //mazewarClient.add_server_Neighbours_socket(receivedSocket);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -422,12 +424,12 @@ class NamingServerListenerThread extends Thread {
             ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
             while (true) {
                 IpBroadCastPacket result = (IpBroadCastPacket) objectInputStream.readObject();
-                mazewarClient.setNeighbours(result.mClientTable);
-                Map<String, MSocket> Newsocketlist = new Hashtable<String, MSocket>();
+
                 for (Map.Entry<String, IpLocation> e: result.mClientTable.entrySet()){
-                    Newsocketlist.put(e.getKey(), new MSocket((e.getValue()).hostAddress,(e.getValue()).port));
+                    mazewarClient.addNeighbours(e.getKey(), e.getValue());
+                    mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress,(e.getValue()).port));
                 }
-                mazewarClient.set_neighbour_sockets_list_for_sender(Newsocketlist);
+
             }
         } catch (IOException e) {
             e.printStackTrace();

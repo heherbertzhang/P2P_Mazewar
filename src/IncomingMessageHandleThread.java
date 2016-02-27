@@ -59,6 +59,10 @@ public class IncomingMessageHandleThread extends Thread {
                     receivedQueue.add(packetInfo);
 
                     break;
+                case MPacket.RECEIVED://TODO
+                    break;
+                case MPacket.RELEASED://TODO
+                    break;
                 case MPacket.CONFIRMATION:
                     //set the message to confirmed on the received queue by finding it first
                     //but will not remove it from the queue since only the head of the queue can be removed and
