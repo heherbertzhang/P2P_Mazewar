@@ -1,7 +1,5 @@
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -160,6 +158,9 @@ public class IncomingMessageHandleThread extends Thread {
                 }
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        catch (NullPointerException e){
             e.printStackTrace();
         }
 
@@ -168,7 +169,7 @@ public class IncomingMessageHandleThread extends Thread {
 }
 
 class ReceivedThread extends Thread {
-    Queue receivedQueue = null;
+    BlockingQueue receivedQueue = null;
     Queue<MPacket> displayQueue = null;
     AtomicInteger currentTimeStamp = null;
     Map<String, MSocket> neighbourSockets = null;
@@ -177,7 +178,7 @@ class ReceivedThread extends Thread {
 
     public ReceivedThread(Queue receivedQueue, Queue<MPacket> displayQueue, AtomicInteger curTimeStamp, Map<String, MSocket> neighbourSockets, List<String> localPlayers,
                           AtomicInteger actionHoldingCount) {
-        this.receivedQueue = receivedQueue;
+        this.receivedQueue = (BlockingQueue) receivedQueue;
         this.displayQueue = displayQueue;
         this.currentTimeStamp = curTimeStamp;
         this.neighbourSockets = neighbourSockets;
@@ -226,46 +227,52 @@ class ReceivedThread extends Thread {
 
 
 class DisplayThread extends Thread {
-    private Queue<MPacket> displayQueue;
+    private BlockingQueue<MPacket> displayQueue;
     private Map<String, Client> clientTable;
 
     public DisplayThread(Queue<MPacket> displayQueue, Map<String, Client> clientTable) {
-        this.displayQueue = displayQueue;
+        this.displayQueue = (BlockingQueue<MPacket>) displayQueue;
         this.clientTable = clientTable;
     }
 
     public void run() {
         if (Debug.debug) System.out.println("Starting display queue thread");
         Client client = null;
-        while (true) {
-            MPacket poll = displayQueue.poll();
+        try {
+            while (true) {
+                MPacket poll = displayQueue.poll(3000, TimeUnit.MILLISECONDS);
 
-
-            if (Debug.debug) System.out.println("ready to take action");
-            client = clientTable.get(poll.name);
-            if (poll.event == MPacket.UP) {
-                client.forward();
-            } else if (poll.event == MPacket.DOWN) {
-                client.backup();
-            } else if (poll.event == MPacket.LEFT) {
-                client.turnLeft();
-            } else if (poll.event == MPacket.RIGHT) {
-                client.turnRight();
-            } else if (poll.event == MPacket.FIRE) {
-                System.out.println(client.getName() + " about to call fire()");
-                client.fire();
-            } else if (poll.event == MPacket.DIE) {
-                Player newPosition = poll.players[0];
-                Client sourceClient = clientTable.get(poll.players[1].name);
-                //Client destClient = clientTable.get(newPosition.name);
-                client.die(sourceClient, newPosition);
-            } else if (poll.event == MPacket.MOVE_BULLET) {
-                //int prj = received.projectile;
-                String prj = poll.name;
-                client.bullet_move(prj);
-            } else {
-                throw new UnsupportedOperationException();
+                if (Debug.debug) System.out.println("ready to take action");
+                client = clientTable.get(poll.name);
+                if (poll.event == MPacket.UP) {
+                    client.forward();
+                } else if (poll.event == MPacket.DOWN) {
+                    client.backup();
+                } else if (poll.event == MPacket.LEFT) {
+                    client.turnLeft();
+                } else if (poll.event == MPacket.RIGHT) {
+                    client.turnRight();
+                } else if (poll.event == MPacket.FIRE) {
+                    System.out.println(client.getName() + " about to call fire()");
+                    client.fire();
+                } else if (poll.event == MPacket.DIE) {
+                    Player newPosition = poll.players[0];
+                    Client sourceClient = clientTable.get(poll.players[1].name);
+                    //Client destClient = clientTable.get(newPosition.name);
+                    client.die(sourceClient, newPosition);
+                } else if (poll.event == MPacket.MOVE_BULLET) {
+                    //int prj = received.projectile;
+                    String prj = poll.name;
+                    client.bullet_move(prj);
+                } else {
+                    throw new UnsupportedOperationException();
+                }
             }
+        }catch (InterruptedException e){
+            Thread.currentThread().interrupt();
+        }catch (NullPointerException e){
+            e.printStackTrace();
+            //Thread.currentThread().interrupt();
         }
     }
 }
