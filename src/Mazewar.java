@@ -287,6 +287,23 @@ public class Mazewar extends JFrame {
                 }
                 */
 
+
+        //start naming server
+        /* register the naming server*/
+
+        IpPacket ipPacket = null;
+        try {
+            Socket toNamingServerSocket = new Socket(namingServerHost, namingServerPort);
+            ipPacket = new IpPacket(playerName, InetAddress.getLocalHost().getHostName(), selfPort);
+            ObjectOutputStream toNamingServer = new ObjectOutputStream(toNamingServerSocket.getOutputStream());
+            toNamingServer.writeObject(ipPacket);
+            new NamingServerListenerThread(toNamingServerSocket, this).start();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         //wait till naming server get the guiclient then start the display
         while (!startRender.get()) {
 
@@ -360,22 +377,6 @@ public class Mazewar extends JFrame {
     private void startThreads() {
 
         new ServerSocketHandleThread(serverSocket, this, incomingQueue).start();
-
-        //start naming server
-        /* register the naming server*/
-
-        IpPacket ipPacket = null;
-        try {
-            Socket toNamingServerSocket = new Socket(namingServerHost, namingServerPort);
-            ipPacket = new IpPacket(playerName, InetAddress.getLocalHost().getHostName(), selfPort);
-            ObjectOutputStream toNamingServer = new ObjectOutputStream(toNamingServerSocket.getOutputStream());
-            toNamingServer.writeObject(ipPacket);
-            new NamingServerListenerThread(toNamingServerSocket, this).start();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
         //Start a new sender thread
         new Thread(new ClientSenderThread(sequenceNumber,eventQueue, socketsForBroadcast, receivedQueue, curTimeStamp, waitToResendQueue)).start();
@@ -499,6 +500,7 @@ class NamingServerListenerThread extends Thread {
 
                 if(mazewarClient.numberOfPlayers.get() == 2){
                     mazewarClient.startRender.set(true);//can start to display
+                    System.out.println("start to render");
                 }
 
             }
