@@ -289,11 +289,7 @@ public class Mazewar extends JFrame {
 
         //wait till naming server get the guiclient then start the display
         while (!startRender.get()) {
-            try {
-                wait(100000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+
         }
 
         // Create the panel that will display the maze.
