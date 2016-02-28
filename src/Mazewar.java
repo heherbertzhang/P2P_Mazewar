@@ -289,6 +289,7 @@ public class Mazewar extends JFrame {
 
 
         //start naming server
+        new ServerSocketHandleThread(serverSocket, this, incomingQueue).start(); //has to start this before naming server
         /* register the naming server*/
 
         IpPacket ipPacket = null;
@@ -375,8 +376,6 @@ public class Mazewar extends JFrame {
      listening for events
     */
     private void startThreads() {
-
-        new ServerSocketHandleThread(serverSocket, this, incomingQueue).start();
 
         //Start a new sender thread
         new Thread(new ClientSenderThread(sequenceNumber,eventQueue, socketsForBroadcast, receivedQueue, curTimeStamp, waitToResendQueue)).start();
@@ -468,7 +467,7 @@ class NamingServerListenerThread extends Thread {
                     mazewarClient.addNeighbours(e.getKey(), e.getValue());
                     System.out.println("yes add neighbour");
                     mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress,(e.getValue()).port));
-                    System.out.println("stop here?");
+                    System.out.println("add neighbour socket!");
                 }
                 List<Player> players = result.players;
 
