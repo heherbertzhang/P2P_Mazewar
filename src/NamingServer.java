@@ -76,8 +76,9 @@ public class NamingServer {
 
                 //new client receive all other players' ip
                 playerList.add(player);
+                clientMap.put(name, Ip);//put new client before send all others since we need our self
                 toClient.writeObject(new IpBroadCastPacket(clientMap, playerList));
-                clientMap.put(name, Ip);//put new client after send all others
+
 
 
             } catch (IOException | ClassNotFoundException e) {
