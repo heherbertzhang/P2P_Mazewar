@@ -26,12 +26,13 @@ public class ClientListenerThread implements Runnable {
         try {
             while (true) {
                 received = (MPacket) mSocket.readObject();
+                if(Debug.debug) System.out.println("received: " + received.toString());
                 incomingQueue.add(received);
             }
         } catch (IOException e) {
             Thread.currentThread().interrupt();
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
 
     }

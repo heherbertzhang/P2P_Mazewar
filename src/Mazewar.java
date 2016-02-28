@@ -30,10 +30,12 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -77,6 +79,7 @@ public class Mazewar extends JFrame {
     private AvoidRepeatence avoidRepeatenceHelper;
     private long timeout;
     public String playerName;
+    public AtomicBoolean  startRender;
 
 
     public void addNeighbours(String name, IpLocation neighbours) {
@@ -196,17 +199,23 @@ public class Mazewar extends JFrame {
         System.exit(0);
     }
 
+    String namingServerHost;
+    int namingServerPort;
+    int selfPort;
     /**
      * The place where all the pieces are put together.
      */
     public Mazewar(String namingServerHost, int namingServerPort, int selfPort) throws IOException,
-            ClassNotFoundException {
+            ClassNotFoundException, InterruptedException {
         super("ECE419 Mazewar");
         consolePrintLn("ECE419 Mazewar started!");
 
         /*
         * instantiate all of the needed structures
         * */
+        this.namingServerHost = namingServerHost;
+        this.namingServerPort = namingServerPort;
+        this.selfPort = selfPort;
         this.waitToResendQueue = new Hashtable<Integer,SenderPacketInfo>();
         this.serverSocket = new MServerSocket(selfPort);
 		this.receivedQueue = new PriorityBlockingQueue<MPacket>(50, new PacketComparator()) ;
@@ -226,7 +235,7 @@ public class Mazewar extends JFrame {
         this.eventQueue = new LinkedBlockingQueue<MPacket>();
         //Initialize hash table of clients to client name
         this.clientTable = new Hashtable<String, Client>();
-
+        this.startRender = new AtomicBoolean(false);
         // Create the maze
         maze = new MazeImpl(new Point(mazeWidth, mazeHeight), mazeSeed);
         assert (maze != null);
@@ -245,13 +254,7 @@ public class Mazewar extends JFrame {
         //set the name
         playerName = name;
 
-        /* register the naming server*/
-        Socket toNamingServerSocket = new Socket(namingServerHost, namingServerPort);
-        IpPacket ipPacket = new IpPacket(name, InetAddress.getLocalHost().getHostName(), selfPort);
-        ObjectOutputStream toNamingServer = new ObjectOutputStream(toNamingServerSocket.getOutputStream());
-        toNamingServer.writeObject(ipPacket);
-        //start naming server
-        new NamingServerListenerThread(toNamingServerSocket, this).start();
+
 
         //old code
         // mSocket = new MSocket(serverHost, serverPort);
@@ -285,6 +288,10 @@ public class Mazewar extends JFrame {
                 }
                 */
 
+        //wait till naming server get the guiclient then start the display
+        while (!startRender.get()) {
+            wait(100000);
+        }
 
         // Create the panel that will display the maze.
         overheadPanel = new OverheadMazePanel(maze, guiClient);
@@ -352,7 +359,25 @@ public class Mazewar extends JFrame {
      listening for events
     */
     private void startThreads() {
+
         new ServerSocketHandleThread(serverSocket, this, incomingQueue).start();
+
+        //start naming server
+        /* register the naming server*/
+
+        IpPacket ipPacket = null;
+        try {
+            Socket toNamingServerSocket = new Socket(namingServerHost, namingServerPort);
+            ipPacket = new IpPacket(playerName, InetAddress.getLocalHost().getHostName(), selfPort);
+            ObjectOutputStream toNamingServer = new ObjectOutputStream(toNamingServerSocket.getOutputStream());
+            toNamingServer.writeObject(ipPacket);
+            new NamingServerListenerThread(toNamingServerSocket, this).start();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         //Start a new sender thread
         new Thread(new ClientSenderThread(sequenceNumber,eventQueue, socketsForBroadcast, receivedQueue, curTimeStamp, waitToResendQueue)).start();
         //Start a new listener thread
@@ -365,6 +390,9 @@ public class Mazewar extends JFrame {
         new ReceivedThread(receivedQueue, displayQueue, curTimeStamp, socketsForBroadcast,
                 localPlayers, actionHoldingCount);
         new DisplayThread(displayQueue, clientTable);
+
+
+
     }
 
 
@@ -430,22 +458,6 @@ class NamingServerListenerThread extends Thread {
             while (true) {
                 IpBroadCastPacket result = (IpBroadCastPacket) objectInputStream.readObject();
                 Map<String, IpLocation> clientTable = result.mClientTable;
-                System.out.println("clienttable null?"  );
-                System.out.println(clientTable == null);
-
-                for (Map.Entry<String, IpLocation> e: clientTable.entrySet()){
-                    System.out.println("e nul ?");
-                    System.out.println(e==null);
-                    System.out.println(e.getKey());
-                    System.out.println("e value null?");
-                    System.out.println(e.getValue() == null);
-                    System.out.println(e.getValue().hostAddress);
-                    System.out.println("mazeclient null?");
-                    System.out.println(mazewarClient == null);
-                    mazewarClient.addNeighbours(e.getKey(), e.getValue());
-                    mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress,(e.getValue()).port));
-                }
-
                 List<Player> players = result.players;
 
                 //// TODO: 2016-02-28 how to dynamic add the player
@@ -453,7 +465,7 @@ class NamingServerListenerThread extends Thread {
                 //RemoteClient remoteClient = null;
                 for (Player player : players) {
                     if (player.name.equals(mazewarClient.playerName)) {
-                        if (Debug.debug) System.out.println("Adding guiClient: " + player);
+                        if (Debug.debug) System.out.println("Adding guiClient: " + player.toString());
                         //create new client for current player
                         mazewarClient.guiClient = new GUIClient(mazewarClient.playerName, mazewarClient.eventQueue, mazewarClient.actionHoldingCount);
 
@@ -464,13 +476,27 @@ class NamingServerListenerThread extends Thread {
                         mazewarClient.maze.addClientAt(mazewarClient.guiClient, player.point, player.direction);
                         mazewarClient.addKeyListener(mazewarClient.guiClient);
                         mazewarClient.clientTable.put(player.name, mazewarClient.guiClient);
+
                     } else {
-                        if (Debug.debug) System.out.println("Adding remoteClient: " + player);
+                        if (Debug.debug) System.out.println("Adding remoteClient: " + player.toString());
                         RemoteClient remoteClient = new RemoteClient(player.name);
                         //register maze
                         mazewarClient.maze.addClientAt(remoteClient, player.point, player.direction);
                         mazewarClient.clientTable.put(player.name, remoteClient);
                     }
+                }
+
+
+                for (Map.Entry<String, IpLocation> e: clientTable.entrySet()){
+                    System.out.println(e.getKey());
+                    System.out.println(e.getValue().hostAddress);
+
+                    mazewarClient.addNeighbours(e.getKey(), e.getValue());
+                    mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress,(e.getValue()).port));
+                }
+
+                if(mazewarClient.numberOfPlayers.get() == 2){
+                    mazewarClient.startRender.set(true);//can start to display
                 }
 
             }
