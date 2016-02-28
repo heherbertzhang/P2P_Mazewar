@@ -438,6 +438,8 @@ class NamingServerListenerThread extends Thread {
                     System.out.println("e value null?");
                     System.out.println(e.getValue() == null);
                     System.out.println(e.getValue().hostAddress);
+                    System.out.println("mazeclient null?");
+                    System.out.println(mazewarClient == null);
                     mazewarClient.addNeighbours(e.getKey(), e.getValue());
                     mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress,(e.getValue()).port));
                 }
