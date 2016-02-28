@@ -1,4 +1,7 @@
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -8,6 +11,7 @@ public class IpPacket implements Serializable{
     public String hostName;
     public IpLocation Ip;
     public int statusCode;
+    public Player player;
 
     public IpPacket(String hostName, String host, int port){
         this.hostName = hostName;
@@ -30,8 +34,9 @@ class IpLocation implements Serializable{
 
 class IpBroadCastPacket implements Serializable{
     Map<String, IpLocation> mClientTable;
-
-    public IpBroadCastPacket(Map cs){
+    List<Player> players;
+    public IpBroadCastPacket(Map cs, List players){
         this.mClientTable = cs;
+        this.players = players; //need copy constructor?
     }
 }

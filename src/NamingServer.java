@@ -1,10 +1,10 @@
 import java.io.IOException;
+import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Hashtable;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by herbert on 2016-02-04.
@@ -12,6 +12,8 @@ import java.util.Map;
 public class NamingServer {
     static Map<String, IpLocation> mClientTable = new Hashtable<>();
     static Map<Socket, ObjectOutputStream> mSocketTable = new Hashtable<>();
+    static List<Player> playerList = new LinkedList<>();
+    static Random randomGen = new Random(Mazewar.mazeSeed);
 
     public static void main(String[] args) throws IOException {
         boolean listening = true;
@@ -58,18 +60,25 @@ public class NamingServer {
                 Map newclientMap = new Hashtable<>();
                 newclientMap.put(name, Ip);
 
+                //Get a random location for player
+                Point point =
+                        new Point(randomGen.nextInt(Mazewar.mazeWidth),
+                                randomGen.nextInt(Mazewar.mazeHeight));
+                //Start them all facing North
+                Player player = new Player(packet.hostName, point, Player.North);
+                List newPlayer= new LinkedList<>();
+                newPlayer.add(player);
                 //broadcast to all except this socket about this new player
                 for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
                     ObjectOutputStream oos  = entry.getValue();
-                    oos.writeObject(new IpBroadCastPacket(newclientMap));
+                    oos.writeObject(new IpBroadCastPacket(newclientMap, newPlayer));
                 }
                 mSocketTable.put(socket, toClient);//add to broadcast list after broadcast
 
                 //new client receive all other players' ip
-                toClient.writeObject(new IpBroadCastPacket(clientMap));
-
+                toClient.writeObject(new IpBroadCastPacket(clientMap, playerList));
                 clientMap.put(name, Ip);//put new client after send all others
-
+                playerList.add(player);
 
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -78,9 +87,6 @@ public class NamingServer {
 
 
     }
-
-
-
 
 }
 

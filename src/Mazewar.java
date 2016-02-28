@@ -65,17 +65,18 @@ public class Mazewar extends JFrame {
 	private Queue<MPacket> receivedQueue;
 	private Queue<MPacket> displayQueue;
     private Queue<MPacket> incomingQueue;
-    private List<String> localPlayers = null;
+    protected List<String> localPlayers = null;
     private Map<String, IpLocation> neighbours;
     private Map<String, MSocket> socketsForBroadcast;
-    private AtomicInteger actionHoldingCount;
-    private AtomicInteger numberOfPlayers;
-    private AtomicInteger curTimeStamp;
-    private AtomicInteger sequenceNumber;
+    protected AtomicInteger actionHoldingCount;
+    protected AtomicInteger numberOfPlayers;
+    protected AtomicInteger curTimeStamp;
+    protected AtomicInteger sequenceNumber;
     private Hashtable<Integer,SenderPacketInfo> waitToResendQueue;
     private BlockingQueue<MPacket> confirmationQueue;
     private AvoidRepeatence avoidRepeatenceHelper;
     private long timeout;
+    public String playerName;
 
 
     public void addNeighbours(String name, IpLocation neighbours) {
@@ -98,24 +99,24 @@ public class Mazewar extends JFrame {
     /**
      * The default width of the {@link Maze}.
      */
-    private final int mazeWidth = 20;
+    public static final int mazeWidth = 20;
 
     /**
      * The default height of the {@link Maze}.
      */
-    private final int mazeHeight = 10;
+    public static final int mazeHeight = 10;
 
     /**
      * The default random seed for the {@link Maze}.
      * All implementations of the same protocol must use
      * the same seed value, or your mazes will be different.
      */
-    private final int mazeSeed = 42;
+    public static final int mazeSeed = 42;
 
     /**
      * The {@link Maze} that the game uses.
      */
-    private Maze maze = null;
+    protected Maze maze = null;
 
     /**
      * The Mazewar instance itself.
@@ -128,18 +129,18 @@ public class Mazewar extends JFrame {
     /**
      * The {@link GUIClient} for the game.
      */
-    private GUIClient guiClient = null;
+    public GUIClient guiClient = null;
 
 
     /**
      * A map of {@link Client} clients to client name.
      */
-    private Hashtable<String, Client> clientTable = null;
+    protected Hashtable<String, Client> clientTable = null;
 
     /**
      * A queue of events.
      */
-    private BlockingQueue<MPacket> eventQueue = null;
+    protected BlockingQueue<MPacket> eventQueue = null;
 
     /**
      * The panel that displays the {@link Maze}.
@@ -219,7 +220,10 @@ public class Mazewar extends JFrame {
         this.confirmationQueue= new LinkedBlockingQueue <MPacket>();
         this.timeout = 10000;
         this.avoidRepeatenceHelper = new AvoidRepeatence();
-
+        //Initialize queue of events
+        this.eventQueue = new LinkedBlockingQueue<MPacket>();
+        //Initialize hash table of clients to client name
+        this.clientTable = new Hashtable<String, Client>();
 
         // Create the maze
         maze = new MazeImpl(new Point(mazeWidth, mazeHeight), mazeSeed);
@@ -236,7 +240,8 @@ public class Mazewar extends JFrame {
         if ((name == null) || (name.length() == 0)) {
             Mazewar.quit();
         }
-
+        //set the name
+        playerName = name;
 
         /* register the naming server*/
         Socket toNamingServerSocket = new Socket(namingServerHost, namingServerPort);
@@ -246,10 +251,11 @@ public class Mazewar extends JFrame {
         //start naming server
         new NamingServerListenerThread(toNamingServerSocket, this).start();
 
-        //mSocket = new MSocket(serverHost, serverPort);
+        //old code
+        // mSocket = new MSocket(serverHost, serverPort);
         //Send hello packet to server
         //register the player to the server
-        MPacket hello = new MPacket(name, MPacket.HELLO, MPacket.HELLO_INIT);
+        /*MPacket hello = new MPacket(name, MPacket.HELLO, MPacket.HELLO_INIT);
         hello.mazeWidth = mazeWidth;
         hello.mazeHeight = mazeHeight;
 
@@ -260,35 +266,10 @@ public class Mazewar extends JFrame {
 		//Receive response from server
         MPacket resp = (MPacket) mSocket.readObject();
         if (Debug.debug) System.out.println("Received response from server");
+        */
 
-        //Initialize queue of events
-        eventQueue = new LinkedBlockingQueue<MPacket>();
-        //Initialize hash table of clients to client name
-        clientTable = new Hashtable<String, Client>();
 
-        // Create the GUIClient and connect it to the KeyListener queue
-        //RemoteClient remoteClient = null;
-        for (Player player : resp.players) {
-            if (player.name.equals(name)) {
-                if (Debug.debug) System.out.println("Adding guiClient: " + player);
-                //create new client for current player
-                guiClient = new GUIClient(name, eventQueue, this.actionHoldingCount);
 
-                //put for the local player list
-                localPlayers.add(guiClient.getName());
-
-                //register maze
-                maze.addClientAt(guiClient, player.point, player.direction);
-                this.addKeyListener(guiClient);
-                clientTable.put(player.name, guiClient);
-            } else {
-                if (Debug.debug) System.out.println("Adding remoteClient: " + player);
-                RemoteClient remoteClient = new RemoteClient(player.name);
-                //register maze
-                maze.addClientAt(remoteClient, player.point, player.direction);
-                clientTable.put(player.name, remoteClient);
-            }
-        }
 
         // Use braces to force constructors not to be called at the beginning of the
         // constructor.
@@ -450,6 +431,33 @@ class NamingServerListenerThread extends Thread {
                 for (Map.Entry<String, IpLocation> e: result.mClientTable.entrySet()){
                     mazewarClient.addNeighbours(e.getKey(), e.getValue());
                     mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress,(e.getValue()).port));
+                }
+
+                List<Player> players = result.players;
+
+                //// TODO: 2016-02-28 how to dynamic add the player
+                // Create the GUIClient and connect it to the KeyListener queue
+                //RemoteClient remoteClient = null;
+                for (Player player : players) {
+                    if (player.name.equals(mazewarClient.playerName)) {
+                        if (Debug.debug) System.out.println("Adding guiClient: " + player);
+                        //create new client for current player
+                        mazewarClient.guiClient = new GUIClient(mazewarClient.playerName, mazewarClient.eventQueue, mazewarClient.actionHoldingCount);
+
+                        //put for the local player list
+                        mazewarClient.localPlayers.add(mazewarClient.guiClient.getName());
+
+                        //register maze
+                        mazewarClient.maze.addClientAt(mazewarClient.guiClient, player.point, player.direction);
+                        mazewarClient.addKeyListener(mazewarClient.guiClient);
+                        mazewarClient.clientTable.put(player.name, mazewarClient.guiClient);
+                    } else {
+                        if (Debug.debug) System.out.println("Adding remoteClient: " + player);
+                        RemoteClient remoteClient = new RemoteClient(player.name);
+                        //register maze
+                        mazewarClient.maze.addClientAt(remoteClient, player.point, player.direction);
+                        mazewarClient.clientTable.put(player.name, remoteClient);
+                    }
                 }
 
             }
