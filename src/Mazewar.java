@@ -387,7 +387,7 @@ public class Mazewar extends JFrame {
         new IncomingMessageHandleThread(incomingQueue, receivedQueue, waitToResendQueue, confirmationQueue,
                 actionHoldingCount, socketsForBroadcast, curTimeStamp, avoidRepeatenceHelper, numberOfPlayers, playerName).start();
         new ReceivedThread(receivedQueue, displayQueue, curTimeStamp, socketsForBroadcast,
-                localPlayers, actionHoldingCount).start();
+                localPlayers, actionHoldingCount, playerName).start();
         new DisplayThread(displayQueue, clientTable).start();
 
 
