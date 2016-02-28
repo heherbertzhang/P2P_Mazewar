@@ -75,9 +75,10 @@ public class NamingServer {
                 mSocketTable.put(socket, toClient);//add to broadcast list after broadcast
 
                 //new client receive all other players' ip
+                playerList.add(player);
                 toClient.writeObject(new IpBroadCastPacket(clientMap, playerList));
                 clientMap.put(name, Ip);//put new client after send all others
-                playerList.add(player);
+
 
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
