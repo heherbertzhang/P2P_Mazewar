@@ -217,6 +217,8 @@ public class Mazewar extends JFrame {
         this.numberOfPlayers = new AtomicInteger(0);
         this.curTimeStamp = new AtomicInteger(0);
         this.sequenceNumber = new AtomicInteger(0);
+        this.neighbours = new Hashtable<String, IpLocation>();
+        this.socketsForBroadcast = new Hashtable<String, MSocket>();
         this.confirmationQueue= new LinkedBlockingQueue <MPacket>();
         this.timeout = 10000;
         this.avoidRepeatenceHelper = new AvoidRepeatence();
