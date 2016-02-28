@@ -219,7 +219,7 @@ public class Mazewar extends JFrame {
         this.serverSocket = new MServerSocket(selfPort);
 		this.receivedQueue = new PriorityBlockingQueue<MPacket>(50, new PacketComparator()) ;
 		this.displayQueue = new LinkedBlockingQueue<MPacket>(50);
-        this.incomingQueue =  new LinkedList<MPacket>();
+        this.incomingQueue =  new LinkedBlockingQueue<MPacket>();
         this.actionHoldingCount = new AtomicInteger(0);
         this.localPlayers = new LinkedList<String>();
         this.numberOfPlayers = new AtomicInteger(0);
