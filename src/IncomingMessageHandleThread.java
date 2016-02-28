@@ -161,7 +161,7 @@ public class IncomingMessageHandleThread extends Thread {
             Thread.currentThread().interrupt();
         }
         catch (NullPointerException e){
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
 
     }
@@ -271,8 +271,7 @@ class DisplayThread extends Thread {
         }catch (InterruptedException e){
             Thread.currentThread().interrupt();
         }catch (NullPointerException e){
-            e.printStackTrace();
-            //Thread.currentThread().interrupt();
+            Thread.currentThread().interrupt();
         }
     }
 }
