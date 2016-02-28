@@ -74,6 +74,7 @@ public class Mazewar extends JFrame {
     private AtomicInteger sequenceNumber;
     private Hashtable<Integer,SenderPacketInfo> waitToResendQueue;
     private BlockingQueue<MPacket> confirmationQueue;
+    private AvoidRepeatence avoidRepeatenceHelper;
     private long timeout;
 
 
@@ -90,6 +91,7 @@ public class Mazewar extends JFrame {
     public void add_neighbour_socket_for_sender( String name, MSocket socket){
         socketsForBroadcast.put(name, socket);
         numberOfPlayers.incrementAndGet(); // TODO: 2016-02-27 need to decrement when dynamic disconnect
+        avoidRepeatenceHelper.addProccess(name);
     }
 
 
@@ -216,6 +218,9 @@ public class Mazewar extends JFrame {
         this.sequenceNumber = new AtomicInteger(0);
         this.confirmationQueue= new LinkedBlockingQueue <MPacket>();
         this.timeout = 10000;
+        this.avoidRepeatenceHelper = new AvoidRepeatence();
+
+
         // Create the maze
         maze = new MazeImpl(new Point(mazeWidth, mazeHeight), mazeSeed);
         assert (maze != null);
@@ -371,8 +376,11 @@ public class Mazewar extends JFrame {
         //new Thread(new ClientListenerThread(socketsForBroadcast, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
         new ConfirmationBroadcast(sequenceNumber, confirmationQueue, socketsForBroadcast, waitToResendQueue);
         new ResendThread(timeout,waitToResendQueue,socketsForBroadcast);
-        new IncomingMessageHandleThread(incomingQueue, receivedQueue, waitToResendQueue, actionHoldingCount, socketsForBroadcast,curTimeStamp);
-        new ReceivedThread(receivedQueue, displayQueue, curTimeStamp, socketsForBroadcast, localPlayers, actionHoldingCount);
+
+        new IncomingMessageHandleThread(incomingQueue, receivedQueue, waitToResendQueue, confirmationQueue,
+                actionHoldingCount, socketsForBroadcast, curTimeStamp, avoidRepeatenceHelper, numberOfPlayers);
+        new ReceivedThread(receivedQueue, displayQueue, curTimeStamp, socketsForBroadcast,
+                localPlayers, actionHoldingCount);
         new DisplayThread(displayQueue, clientTable);
     }
 
