@@ -49,7 +49,7 @@ public class NamingServer {
                 ObjectOutputStream toClient = new ObjectOutputStream(socket.getOutputStream());
 
                 IpPacket packet = (IpPacket) fromClient.readObject();
-                while(packet == null){
+                while(packet == null) {
                     packet = (IpPacket) fromClient.readObject();
                 }
                 String name = packet.hostName;
@@ -68,7 +68,9 @@ public class NamingServer {
                 List newPlayer= new LinkedList<>();
                 newPlayer.add(player);
                 //broadcast to all except this socket about this new player
+                System.out.println("st size : " + mSocketTable.size());
                 for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
+                    System.out.println("socket: "+ socket.toString());
                     ObjectOutputStream oos  = entry.getValue();
                     oos.writeObject(new IpBroadCastPacket(newclientMap, newPlayer));
                 }
@@ -77,12 +79,14 @@ public class NamingServer {
                 //new client receive all other players' ip
                 playerList.add(player);
                 clientMap.put(name, Ip);//put new client before send all others since we need our self
+                System.out.println("cm size: "+ clientMap.size());
                 toClient.writeObject(new IpBroadCastPacket(clientMap, playerList));
 
 
 
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
         }
 
