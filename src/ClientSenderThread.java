@@ -41,7 +41,7 @@ public class ClientSenderThread implements Runnable {
                 toClient.timestamp = lamportClock.incrementAndGet();
                 toClient.sequenceNumber = this.squenceNumber.incrementAndGet();;
 
-                //Initlize packet
+                //Initlize the List for ack
                 Hashtable<String, Boolean> All_neighbour = new Hashtable<String, Boolean>();
                 for (Map.Entry<String, MSocket> e : this.neighbours_socket.entrySet()) {
                     All_neighbour.put(e.getKey(), false);
