@@ -10,7 +10,7 @@ import java.util.*;
  */
 public class NamingServer {
     static Map<String, IpLocation> mClientTable = new Hashtable<>();
-    static Map<String, Socket> mSocketTable = new Hashtable<>();
+    static Map<Socket, ObjectOutputStream> mSocketTable = new Hashtable<>();
     static List<Player> playerList = new LinkedList<>();
     static Random randomGen = new Random(Mazewar.mazeSeed);
 
@@ -33,9 +33,9 @@ public class NamingServer {
 
     private static class NamingServerHandlingThread extends Thread{
         private Socket socket = null;
-        Map<String, IpLocation> clientMap = null;
-        Map<String, Socket> socketTable;
-        public NamingServerHandlingThread(Socket socket, Map clientMap, Map<String, Socket> socketTable){
+        Map clientMap = null;
+        Map<Socket, ObjectOutputStream> socketTable;
+        public NamingServerHandlingThread(Socket socket, Map clientMap, Map<Socket, ObjectOutputStream> socketTable){
             this.socket = socket;
             this.clientMap = clientMap;
             this.socketTable = socketTable;
@@ -69,21 +69,17 @@ public class NamingServer {
                 newPlayer.add(player);
                 //broadcast to all except this socket about this new player
                 System.out.println("st size : " + mSocketTable.size());
-                for (Map.Entry<String, Socket> entry : mSocketTable.entrySet()) {
-                    System.out.println("socket for: "+ entry.getKey());
-                    Socket otherSocket = entry.getValue();
-                    ObjectOutputStream oos  = new ObjectOutputStream(otherSocket.getOutputStream());
+                for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
+                    System.out.println("socket: "+ socket.toString());
+                    ObjectOutputStream oos  = entry.getValue();
                     oos.writeObject(new IpBroadCastPacket(newclientMap, newPlayer));
                 }
-                mSocketTable.put(name, socket);//add to broadcast list after broadcast
+                mSocketTable.put(socket, toClient);//add to broadcast list after broadcast
 
                 //new client receive all other players' ip
                 playerList.add(player);
                 clientMap.put(name, Ip);//put new client before send all others since we need our self
                 System.out.println("cm size: "+ clientMap.size());
-                for(Map.Entry<String, IpLocation> e : clientMap.entrySet()){
-                    System.out.println("client map inside: " + e.getKey() + " " + e.getValue().toString());
-                }
                 toClient.writeObject(new IpBroadCastPacket(clientMap, playerList));
 
 
