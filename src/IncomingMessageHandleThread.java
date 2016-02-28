@@ -14,8 +14,13 @@ public class IncomingMessageHandleThread extends Thread {
     private AtomicInteger currentTimeStamp = null;
     private Map<Integer, SenderPacketInfo> resendQueue = null;
     private AvoidRepeatence avoidRepeatenceHelper = null;
+    private Queue confirmationQueue = null;
+    private AtomicInteger numOfPlayer = null;//has to be Atomic for dynamic change of the players
 
-    public IncomingMessageHandleThread(Queue<MPacket> incoming, Queue receivedQueue, Map resendQueue, AtomicInteger actionHoldingCount, Map<String, MSocket> neighbours_socket, AtomicInteger currentTimeStamp, AvoidRepeatence avoidRepeatence) {
+    public IncomingMessageHandleThread(Queue<MPacket> incoming, Queue receivedQueue, Map resendQueue,
+                                       Queue confirmationQueue, AtomicInteger actionHoldingCount,
+                                       Map<String, MSocket> neighbours_socket, AtomicInteger currentTimeStamp,
+                                       AvoidRepeatence avoidRepeatence, AtomicInteger numOfPlayer) {
         this.receivedQueue = receivedQueue;
         this.neighbousSockets = neighbours_socket;
         this.actionHoldingCount = actionHoldingCount;
@@ -23,6 +28,8 @@ public class IncomingMessageHandleThread extends Thread {
         this.currentTimeStamp = currentTimeStamp;
         this.resendQueue = resendQueue;
         this.avoidRepeatenceHelper = avoidRepeatence;
+        this.confirmationQueue = confirmationQueue;
+        this.numOfPlayer = numOfPlayer;
     }
 
     public void run() {
@@ -103,6 +110,15 @@ public class IncomingMessageHandleThread extends Thread {
                         if(!senderPacketInfo2.isGotRleasedFrom(headMsg.name)){
                             currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
                             senderPacketInfo2.getReleasedFrom(headMsg.name);
+                            if(senderPacketInfo2.getReleasedCount == numOfPlayer.get()){
+                                senderPacketInfo2.releasedReceicedMap.clear();
+                                senderPacketInfo2.ackFromAll.clear();
+                                MPacket event = senderPacketInfo2.packet;
+                                MPacket toConfirm = new MPacket(event.name, MPacket.CONFIRMATION,
+                                        0/*no need to know event*/, currentTimeStamp.get());
+                                toConfirm.toConfrimSequenceNumber = event.sequenceNumber; //itself's sequence number will be determine by the confirmation thread
+                                confirmationQueue.add(toConfirm);
+                            }
                         }
 
                     }

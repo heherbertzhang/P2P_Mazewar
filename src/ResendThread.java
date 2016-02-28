@@ -26,7 +26,7 @@ public class ResendThread extends Thread {
                     // means timeout
                     // resend the messages to all the clients who didn't give me respond
 
-                    Hashtable<String, Boolean> lostClients= e.getValue().ackFromAll;
+                    Hashtable<String, Boolean> lostClients= (Hashtable<String, Boolean>) e.getValue().ackFromAll;
                     for (Map.Entry k : lostClients.entrySet()) {
                         MSocket lostClientSocket = neighbours_socket.get(k.getKey());
                         lostClientSocket.writeObject(e.getValue().packet);
