@@ -177,15 +177,17 @@ class ReceivedThread extends Thread {
     Map<String, MSocket> neighbourSockets = null;
     List<String> localPlayers = null;
     AtomicInteger actionHoldingCount = null;
+    String selfName;
 
     public ReceivedThread(Queue receivedQueue, Queue<MPacket> displayQueue, AtomicInteger curTimeStamp, Map<String, MSocket> neighbourSockets, List<String> localPlayers,
-                          AtomicInteger actionHoldingCount) {
+                          AtomicInteger actionHoldingCount, String selfName) {
         this.receivedQueue = (BlockingQueue) receivedQueue;
         this.displayQueue = displayQueue;
         this.currentTimeStamp = curTimeStamp;
         this.neighbourSockets = neighbourSockets;
         this.localPlayers = localPlayers;
         this.actionHoldingCount = actionHoldingCount;
+        this.selfName = selfName;
     }
 
     @Override
@@ -199,21 +201,18 @@ class ReceivedThread extends Thread {
                 continue;
             }
             if (!peek.isReleased) {
-                MPacket replyMsg = new MPacket(MPacket.RELEASED, 0);
-                replyMsg.sequenceNumber = peek.Packet.sequenceNumber;
-                replyMsg.timestamp = Math.max(currentTimeStamp.get(), peek.Packet.timestamp) + 1;
+                //if not released yet we need to release it when it's head and send back release message
+                MPacket reply = new MPacket(0, 0);
+                reply.name = selfName;
+                reply.sequenceNumber = peek.Packet.sequenceNumber;
+                currentTimeStamp.set(Math.max(currentTimeStamp.get(), peek.Packet.timestamp) + 1);//update currentTimeStamp
+                reply.timestamp = currentTimeStamp.get();
+                reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
                 MSocket mSocket = neighbourSockets.get(peek.Packet.name);
-                mSocket.writeObject(replyMsg);
+                mSocket.writeObject(reply);
             }
             if (peek.isConfirmed) {
                 //confrimed so we can remove the msg
-
-                MPacket replyMsg = new MPacket(MPacket.RECEIVED, 0);
-                replyMsg.sequenceNumber = peek.confirmMsgSequenceNum;
-                replyMsg.timestamp = Math.max(currentTimeStamp.get(), peek.Packet.timestamp) + 1;
-                MSocket mSocket = neighbourSockets.get(peek.Packet.name);
-                mSocket.writeObject(replyMsg);
-
                 //remove and add to display queue
                 PacketInfo removed = (PacketInfo) receivedQueue.poll();
                 displayQueue.add(removed.Packet);
