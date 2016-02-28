@@ -381,14 +381,14 @@ public class Mazewar extends JFrame {
         new Thread(new ClientSenderThread(sequenceNumber,eventQueue, socketsForBroadcast, receivedQueue, curTimeStamp, waitToResendQueue)).start();
         //Start a new listener thread
         //new Thread(new ClientListenerThread(socketsForBroadcast, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
-        new ConfirmationBroadcast(sequenceNumber, confirmationQueue, socketsForBroadcast, waitToResendQueue);
-        new ResendThread(timeout,waitToResendQueue,socketsForBroadcast);
+        new ConfirmationBroadcast(sequenceNumber, confirmationQueue, socketsForBroadcast, waitToResendQueue).start();
+        new ResendThread(timeout,waitToResendQueue,socketsForBroadcast).start();
 
         new IncomingMessageHandleThread(incomingQueue, receivedQueue, waitToResendQueue, confirmationQueue,
-                actionHoldingCount, socketsForBroadcast, curTimeStamp, avoidRepeatenceHelper, numberOfPlayers);
+                actionHoldingCount, socketsForBroadcast, curTimeStamp, avoidRepeatenceHelper, numberOfPlayers).start();
         new ReceivedThread(receivedQueue, displayQueue, curTimeStamp, socketsForBroadcast,
-                localPlayers, actionHoldingCount);
-        new DisplayThread(displayQueue, clientTable);
+                localPlayers, actionHoldingCount).start();
+        new DisplayThread(displayQueue, clientTable).start();
 
 
 
