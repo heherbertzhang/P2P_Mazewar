@@ -43,7 +43,10 @@ public class IncomingMessageHandleThread extends Thread {
                 //get the head from incoming queue and then deals with it
                 //check for the type of the message
                 MPacket headMsg = null;
-                headMsg = incomingQueue.poll(5, TimeUnit.SECONDS);
+                while (headMsg == null) {
+                    headMsg = incomingQueue.poll(5, TimeUnit.SECONDS);
+                }
+                System.out.println("incoming message: " + headMsg.toString());
                 switch (headMsg.type) {
                     case MPacket.ACTION:
                         //// TODO: 2016-02-27 to avoid bug the best we can do is to no check the action holding count
@@ -118,6 +121,7 @@ public class IncomingMessageHandleThread extends Thread {
                                 currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
                                 senderPacketInfo2.getReleasedFrom(headMsg.name);
                                 if (senderPacketInfo2.getReleasedCount == numOfPlayer.get()) {
+                                    System.out.println("adding to confirmation queue");
                                     senderPacketInfo2.releasedReceicedMap.clear();
                                     senderPacketInfo2.ackFromAll.clear();
                                     MPacket event = senderPacketInfo2.packet;
@@ -210,6 +214,7 @@ class ReceivedThread extends Thread {
                 reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
                 MSocket mSocket = neighbourSockets.get(peek.Packet.name);
                 mSocket.writeObject(reply);
+                System.out.println("sending release");
                 peek.isReleased = true;
             }
             if (peek.isConfirmed) {
@@ -242,9 +247,12 @@ class DisplayThread extends Thread {
         Client client = null;
         try {
             while (true) {
-                MPacket poll = displayQueue.poll(3, TimeUnit.SECONDS);
+                MPacket poll = null;
+                while (poll == null) {
+                    poll = displayQueue.poll(3, TimeUnit.SECONDS);
+                }
 
-                if (Debug.debug) System.out.println("ready to take action");
+                if (Debug.debug) System.out.println("ready to take action " + poll.toString());
                 client = clientTable.get(poll.name);
                 if (poll.event == MPacket.UP) {
                     client.forward();
