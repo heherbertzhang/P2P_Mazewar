@@ -43,7 +43,7 @@ public class IncomingMessageHandleThread extends Thread {
                 //get the head from incoming queue and then deals with it
                 //check for the type of the message
                 MPacket headMsg = null;
-                headMsg = incomingQueue.poll(5000, TimeUnit.MILLISECONDS);
+                headMsg = incomingQueue.poll(5, TimeUnit.SECONDS);
                 switch (headMsg.type) {
                     case MPacket.ACTION:
                         //// TODO: 2016-02-27 to avoid bug the best we can do is to no check the action holding count
@@ -242,7 +242,7 @@ class DisplayThread extends Thread {
         Client client = null;
         try {
             while (true) {
-                MPacket poll = displayQueue.poll(3000, TimeUnit.MILLISECONDS);
+                MPacket poll = displayQueue.poll(3, TimeUnit.SECONDS);
 
                 if (Debug.debug) System.out.println("ready to take action");
                 client = clientTable.get(poll.name);
