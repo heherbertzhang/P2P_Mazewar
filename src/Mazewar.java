@@ -427,8 +427,12 @@ class NamingServerListenerThread extends Thread {
             ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
             while (true) {
                 IpBroadCastPacket result = (IpBroadCastPacket) objectInputStream.readObject();
+                Map<String, IpLocation> clientTable = result.mClientTable;
+                System.out.println("clienttable null?" + clientTable == null);
 
-                for (Map.Entry<String, IpLocation> e: result.mClientTable.entrySet()){
+                for (Map.Entry<String, IpLocation> e: clientTable.entrySet()){
+                    System.out.println("e null?" + e==null);
+                    System.out.println(e.getKey());
                     mazewarClient.addNeighbours(e.getKey(), e.getValue());
                     mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress,(e.getValue()).port));
                 }
