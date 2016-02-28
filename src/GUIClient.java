@@ -36,7 +36,7 @@ public class GUIClient extends LocalClient implements KeyListener {
          */
         //private BlockingQueue eventQueue = null;
         
-        public GUIClient(String name, BlockingQueue eventQueue, AtomicInteger actionCount) {
+        public GUIClient(String name, BlockingQueue<MPacket> eventQueue, AtomicInteger actionCount) {
                 super(name, eventQueue, actionCount);
                 //this.eventQueue = eventQueue;
         }

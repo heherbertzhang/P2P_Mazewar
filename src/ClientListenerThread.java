@@ -1,14 +1,12 @@
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientListenerThread implements Runnable {
 
     private MSocket mSocket = null;
-    private Queue incomingQueue = null;
+    private Queue<MPacket> incomingQueue = null;
 
-    public ClientListenerThread(Queue incomingQueue, MSocket mSocket) {
+    public ClientListenerThread(Queue<MPacket> incomingQueue, MSocket mSocket) {
 
         this.incomingQueue = incomingQueue;
         this.mSocket = mSocket;

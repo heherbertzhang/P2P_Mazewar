@@ -112,7 +112,7 @@ public abstract class Maze {
      * Obtain an {@link Iterator} over all {@link Client}s in the {@link Maze} 
      * @return {@link Iterator} over clients in the {@link Maze}. 
      */
-    public abstract Iterator getClients();
+    public abstract Iterator<Client> getClients();
     
     /* Maze Listeners ******************************************************/
 

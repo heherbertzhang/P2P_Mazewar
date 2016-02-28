@@ -1,5 +1,3 @@
-import com.sun.org.apache.regexp.internal.RE;
-
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -27,7 +25,7 @@ public class ResendThread extends Thread {
                     // resend the messages to all the clients who didn't give me respond
 
                     Hashtable<String, Boolean> lostClients= (Hashtable<String, Boolean>) e.getValue().ackFromAll;
-                    for (Map.Entry k : lostClients.entrySet()) {
+                    for (Map.Entry<String, Boolean> k : lostClients.entrySet()) {
                         MSocket lostClientSocket = neighbours_socket.get(k.getKey());
                         lostClientSocket.writeObject(e.getValue().packet);
                     }

@@ -35,7 +35,7 @@ public class SenderPacketInfo {
         return (releasedReceicedMap.get(name) != null);
     }
 
-    public Map whoToResend(){
+    public Map<String, Boolean> whoToResend(){
         return ackFromAll;
     }
 

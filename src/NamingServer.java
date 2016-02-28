@@ -1,5 +1,4 @@
 import java.io.IOException;
-import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -35,8 +34,8 @@ public class NamingServer {
     private static class NamingServerHandlingThread extends Thread{
         private Socket socket = null;
         Map clientMap = null;
-        Map socketTable;
-        public NamingServerHandlingThread(Socket socket, Map clientMap, Map socketTable){
+        Map<Socket, ObjectOutputStream> socketTable;
+        public NamingServerHandlingThread(Socket socket, Map clientMap, Map<Socket, ObjectOutputStream> socketTable){
             this.socket = socket;
             this.clientMap = clientMap;
             this.socketTable = socketTable;

@@ -4,9 +4,9 @@ import java.util.concurrent.BlockingQueue;
 public class ServerListenerThread implements Runnable {
 
     private MSocket mSocket =  null;
-    private BlockingQueue eventQueue = null;
+    private BlockingQueue<MPacket> eventQueue = null;
 
-    public ServerListenerThread( MSocket mSocket, BlockingQueue eventQueue){
+    public ServerListenerThread(MSocket mSocket, BlockingQueue<MPacket> eventQueue){
         this.mSocket = mSocket;
         this.eventQueue = eventQueue;
     }

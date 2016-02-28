@@ -18,7 +18,6 @@ USA.
 */
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -38,10 +37,10 @@ public abstract class LocalClient extends Client {
      * Create a {@link Client} local to this machine.
      */
 
-    private BlockingQueue eventQueue = null;
+    private BlockingQueue<MPacket> eventQueue = null;
     public AtomicInteger actionCount;
 
-    public LocalClient(String name, BlockingQueue eventQueue, AtomicInteger actionCount) {
+    public LocalClient(String name, BlockingQueue<MPacket> eventQueue, AtomicInteger actionCount) {
         super(name);
         this.eventQueue = eventQueue;
         this.actionCount = actionCount;

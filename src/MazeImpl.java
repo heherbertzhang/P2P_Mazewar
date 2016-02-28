@@ -56,9 +56,9 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
                 assert(maxY > 0);
 
                 // Initialize the maze matrix of cells
-                mazeVector = new Vector(maxX);
+                mazeVector = new Vector<Vector<CellImpl>>(maxX);
                 for(int i = 0; i < maxX; i++) {
-                        Vector colVector = new Vector(maxY);
+                        Vector<CellImpl> colVector = new Vector<CellImpl>(maxY);
 
                         for(int j = 0; j < maxY; j++) {
                                 colVector.insertElementAt(new CellImpl(), j);
@@ -354,7 +354,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
         }
 
 
-        public synchronized Iterator getClients() {
+        public synchronized Iterator<Client> getClients() {
                 return clientMap.keySet().iterator();
         }
 
@@ -389,7 +389,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
                 //Collection deadPrj = new HashSet();
                 while(true) {
                         if(!projectileMap.isEmpty()) {
-                                Iterator it = projectileMap.keySet().iterator();
+                                Iterator<Projectile> it = projectileMap.keySet().iterator();
                                 synchronized(projectileMap) {
                                         while(it.hasNext()) {
                                                 Object o = it.next();
@@ -429,7 +429,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
 
                 Collection deadPrj = new LinkedList();
                 //assert(prj != null);
-                Projectile prj = (Projectile) projectileCodeMap.get(prjname);
+                Projectile prj = projectileCodeMap.get(prjname);
                 if (prj != null) {
                         Object o = projectileMap.get(prj);
                         if (o == null) {
@@ -690,31 +690,31 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
          * The {@link Vector} of {@link Vector}s holding the
          * {@link Cell}s of the {@link Maze}.
          */
-        private final Vector mazeVector;
+        private final Vector<Vector<CellImpl>> mazeVector;
 
         /**
          * A map between {@link Client}s and {@link DirectedPoint}s
          * locating them in the {@link Maze}.
          */
-        private final Map clientMap = new HashMap();
+        private final Map<Client, Point> clientMap = new HashMap<Client, Point>();
 
         /**
          * The set of {@link MazeListener}s that are presently
          * in the notification queue.
          */
-        private final Set listenerSet = new HashSet();
+        private final Set<MazeListener> listenerSet = new HashSet<MazeListener>();
 
         /**
          * Mapping from {@link Projectile}s to {@link DirectedPoint}s.
          */
-        private final Map projectileMap = new HashMap();
-        private final Map projectileCodeMap = new HashMap();
+        private final Map<Projectile, DirectedPoint> projectileMap = new HashMap<Projectile, DirectedPoint>();
+        private final Map<String, Projectile> projectileCodeMap = new HashMap<String, Projectile>();
 
         /**
          * The set of {@link Client}s that have {@link Projectile}s in
          * play.
          */
-        private final Set clientFired = new HashSet();
+        private final Set<Client> clientFired = new HashSet<Client>();
 
         /**
          * The thread used to manage {@link Projectile}s.
@@ -728,7 +728,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
          */
         private void notifyClientAdd(Client c) {
                 assert(c != null);
-                Iterator i = listenerSet.iterator();
+                Iterator<MazeListener> i = listenerSet.iterator();
                 while (i.hasNext()) {
                         Object o = i.next();
                         assert(o instanceof MazeListener);
@@ -744,7 +744,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
          */
         private void notifyClientRemove(Client c) {
                 assert(c != null);
-                Iterator i = listenerSet.iterator();
+                Iterator<MazeListener> i = listenerSet.iterator();
                 while (i.hasNext()) {
                         Object o = i.next();
                         assert(o instanceof MazeListener);
@@ -760,7 +760,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
          */
         private void notifyClientFired(Client c) {
                 assert(c != null);
-                Iterator i = listenerSet.iterator();
+                Iterator<MazeListener> i = listenerSet.iterator();
                 while (i.hasNext()) {
                         Object o = i.next();
                         assert(o instanceof MazeListener);
@@ -778,7 +778,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
         private void notifyClientKilled(Client source, Client target) {
                 assert(source != null);
                 assert(target != null);
-                Iterator i = listenerSet.iterator();
+                Iterator<MazeListener> i = listenerSet.iterator();
                 while (i.hasNext()) {
                         Object o = i.next();
                         assert(o instanceof MazeListener);
@@ -792,7 +792,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
          * changed in some fashion.
          */
         private void update() {
-                Iterator i = listenerSet.iterator();
+                Iterator<MazeListener> i = listenerSet.iterator();
                 while (i.hasNext()) {
                         Object o = i.next();
                         assert(o instanceof MazeListener);
@@ -938,7 +938,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
                         Direction.South };
 
                 // Create a vector of the possible choices
-                Vector options = new Vector();
+                Vector<Direction> options = new Vector<Direction>();
 
                 // Iterate through the directions and see which
                 // Cells have been visited, adding those that haven't

@@ -1,9 +1,7 @@
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.BlockingQueue;
-import java.util.Hashtable;
 
 
 /**
@@ -39,8 +37,8 @@ public class ConfirmationBroadcast  extends Thread {
                 // Initlize time
                 long time = System.currentTimeMillis();
                 SenderPacketInfo info = new SenderPacketInfo(All_neighbour, this.sequenceNumber.get(), time, toClient);
-                for (Map.Entry e : neighbours_socket.entrySet()) {
-                    MSocket each_client_socket = (MSocket) e.getValue();
+                for (Map.Entry<String, MSocket> e : neighbours_socket.entrySet()) {
+                    MSocket each_client_socket = e.getValue();
                     each_client_socket.writeObject(toClient);
                 }
 

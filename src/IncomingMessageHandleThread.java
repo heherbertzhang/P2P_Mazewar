@@ -14,11 +14,11 @@ public class IncomingMessageHandleThread extends Thread {
     private AtomicInteger currentTimeStamp = null;
     private Map<Integer, SenderPacketInfo> resendQueue = null;
     private AvoidRepeatence avoidRepeatenceHelper = null;
-    private Queue confirmationQueue = null;
+    private Queue<MPacket> confirmationQueue = null;
     private AtomicInteger numOfPlayer = null;//has to be Atomic for dynamic change of the players
 
-    public IncomingMessageHandleThread(Queue<MPacket> incoming, Queue receivedQueue, Map resendQueue,
-                                       Queue confirmationQueue, AtomicInteger actionHoldingCount,
+    public IncomingMessageHandleThread(Queue<MPacket> incoming, Queue receivedQueue, Map<Integer, SenderPacketInfo> resendQueue,
+                                       Queue<MPacket> confirmationQueue, AtomicInteger actionHoldingCount,
                                        Map<String, MSocket> neighbours_socket, AtomicInteger currentTimeStamp,
                                        AvoidRepeatence avoidRepeatence, AtomicInteger numOfPlayer) {
         this.receivedQueue = receivedQueue;

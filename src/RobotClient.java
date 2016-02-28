@@ -18,7 +18,6 @@ USA.
 */
  
 import java.util.Random;
-import java.util.Vector;
 import java.lang.Runnable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -53,7 +52,7 @@ public class RobotClient extends LocalClient implements Runnable {
          * Create a computer controlled {@link LocalClient}.
          * @param name The name of this {@link RobotClient}.
          */
-        public RobotClient(String name, BlockingQueue queue, AtomicInteger actionCount) {
+        public RobotClient(String name, BlockingQueue<MPacket> queue, AtomicInteger actionCount) {
                 super(name, queue, actionCount);
                 assert(name != null);
                 // Create our thread

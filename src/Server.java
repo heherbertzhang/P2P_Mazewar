@@ -1,6 +1,5 @@
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -12,7 +11,7 @@ public class Server {
     private MServerSocket mServerSocket = null;
     private int clientCount; //The number of clients before game starts
     private MSocket[] mSocketList = null; //A list of MSockets
-    private BlockingQueue eventQueue = null; //A list of events
+    private BlockingQueue<MPacket> eventQueue = null; //A list of events
     
     /*
     * Constructor

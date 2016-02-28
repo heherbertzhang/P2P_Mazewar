@@ -7,11 +7,11 @@ public class ServerSenderThread implements Runnable {
 
     //private ObjectOutputStream[] outputStreamList = null;
     private MSocket[] mSocketList = null;
-    private BlockingQueue eventQueue = null;
+    private BlockingQueue<MPacket> eventQueue = null;
     private int globalSequenceNumber; 
     
     public ServerSenderThread(MSocket[] mSocketList,
-                              BlockingQueue eventQueue){
+                              BlockingQueue<MPacket> eventQueue){
         this.mSocketList = mSocketList;
         this.eventQueue = eventQueue;
         this.globalSequenceNumber = 0;
@@ -31,7 +31,7 @@ public class ServerSenderThread implements Runnable {
         MPacket hello = null;
         try{        
             for(int i=0; i<playerCount; i++){
-                hello = (MPacket)eventQueue.take();
+                hello = eventQueue.take();
                 //Sanity check 
                 if(hello.type != MPacket.HELLO){
                     throw new InvalidObjectException("Expecting HELLO Packet");
@@ -74,7 +74,7 @@ public class ServerSenderThread implements Runnable {
             try{
                 //Take packet from queue to broadcast
                 //to all clients
-                toBroadcast = (MPacket)eventQueue.take();
+                toBroadcast = eventQueue.take();
                 //Tag packet with sequence number and increment sequence number
                 toBroadcast.sequenceNumber = this.globalSequenceNumber++;
                 if(Debug.debug) System.out.println("Sending " + toBroadcast);

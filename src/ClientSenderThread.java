@@ -1,9 +1,6 @@
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -12,11 +9,11 @@ public class ClientSenderThread implements Runnable {
     private BlockingQueue<MPacket> eventQueue = null;
     private Map<String, MSocket> neighbours_socket;
     private AtomicInteger squenceNumber;
-    private Queue receivedQueue = null;
+    private Queue<MPacket> receivedQueue = null;
     private AtomicInteger lamportClock;
     private Hashtable<Integer, SenderPacketInfo> waitingToResend;
 
-    public ClientSenderThread(AtomicInteger sequencenumber,BlockingQueue eventQueue, Map<String, MSocket> neighbours_socket, Queue receivedQueue, AtomicInteger lamportClock, Hashtable<Integer, SenderPacketInfo> waitingToResend) {
+    public ClientSenderThread(AtomicInteger sequencenumber, BlockingQueue<MPacket> eventQueue, Map<String, MSocket> neighbours_socket, Queue<MPacket> receivedQueue, AtomicInteger lamportClock, Hashtable<Integer, SenderPacketInfo> waitingToResend) {
         this.eventQueue = eventQueue;
         this.neighbours_socket = neighbours_socket;
         this.receivedQueue = receivedQueue;
@@ -50,8 +47,8 @@ public class ClientSenderThread implements Runnable {
                 // Initlize time
                 long time = System.currentTimeMillis();
                 SenderPacketInfo info = new SenderPacketInfo(All_neighbour, this.squenceNumber.get(), time, toClient);
-                for (Map.Entry e : neighbours_socket.entrySet()) {
-                    MSocket each_client_socket = (MSocket) e.getValue();
+                for (Map.Entry<String, MSocket> e : neighbours_socket.entrySet()) {
+                    MSocket each_client_socket = e.getValue();
                     each_client_socket.writeObject(toClient);
                 }
             }

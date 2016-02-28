@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.lang.Integer;
 import java.lang.Class;
 import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Map;
@@ -92,9 +91,9 @@ public class ScoreTableModel implements TableModel, MazeListener {
                 }
         }
         
-        private Set listenerSet = new HashSet();
+        private Set<TableModelListener> listenerSet = new HashSet<TableModelListener>();
         private SortedSet scoreSet = new SortedMultiSet();
-        private Map clientMap = new HashMap();
+        private Map<Client, ScoreWrapper> clientMap = new HashMap<Client, ScoreWrapper>();
                 
         public void addTableModelListener(TableModelListener l) {
                 assert(l != null);
@@ -236,7 +235,7 @@ public class ScoreTableModel implements TableModel, MazeListener {
         }
 
         private void notifyListeners() {
-                Iterator i = listenerSet.iterator();
+                Iterator<TableModelListener> i = listenerSet.iterator();
                 while (i.hasNext()) {
                         Object o = i.next();
                         assert(o instanceof TableModelListener);
