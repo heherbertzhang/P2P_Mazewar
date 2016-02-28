@@ -461,6 +461,15 @@ class NamingServerListenerThread extends Thread {
             while (true) {
                 IpBroadCastPacket result = (IpBroadCastPacket) objectInputStream.readObject();
                 Map<String, IpLocation> clientTable = result.mClientTable;
+                for (Map.Entry<String, IpLocation> e: clientTable.entrySet()){
+                    System.out.println(e.getKey());
+                    System.out.println(e.getValue().hostAddress);
+
+                    mazewarClient.addNeighbours(e.getKey(), e.getValue());
+                    System.out.println("yes add neighbour");
+                    mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress,(e.getValue()).port));
+                    System.out.println("stop here?");
+                }
                 List<Player> players = result.players;
 
                 //// TODO: 2016-02-28 how to dynamic add the player
@@ -490,13 +499,7 @@ class NamingServerListenerThread extends Thread {
                 }
 
 
-                for (Map.Entry<String, IpLocation> e: clientTable.entrySet()){
-                    System.out.println(e.getKey());
-                    System.out.println(e.getValue().hostAddress);
 
-                    mazewarClient.addNeighbours(e.getKey(), e.getValue());
-                    mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress,(e.getValue()).port));
-                }
 
                 if(mazewarClient.numberOfPlayers.get() == 2){
                     mazewarClient.startRender.set(true);//can start to display
