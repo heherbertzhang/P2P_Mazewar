@@ -426,6 +426,7 @@ class ServerSocketHandleThread extends Thread{
 
     @Override
     public void run() {
+        System.out.println("starting server socket handle thread");
         while(true){
             try {
                 /*
@@ -453,6 +454,7 @@ class NamingServerListenerThread extends Thread {
 
     @Override
     public void run() {
+        System.out.println("starting naming server listener thread");
         try {
             ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
             while (true) {
@@ -465,7 +467,7 @@ class NamingServerListenerThread extends Thread {
                 //RemoteClient remoteClient = null;
                 for (Player player : players) {
                     if (player.name.equals(mazewarClient.playerName)) {
-                        if (Debug.debug) System.out.println("Adding guiClient: " + player.toString());
+                        System.out.println("Adding guiClient: " + player.toString());
                         //create new client for current player
                         mazewarClient.guiClient = new GUIClient(mazewarClient.playerName, mazewarClient.eventQueue, mazewarClient.actionHoldingCount);
 
@@ -478,7 +480,7 @@ class NamingServerListenerThread extends Thread {
                         mazewarClient.clientTable.put(player.name, mazewarClient.guiClient);
 
                     } else {
-                        if (Debug.debug) System.out.println("Adding remoteClient: " + player.toString());
+                        System.out.println("Adding remoteClient: " + player.toString());
                         RemoteClient remoteClient = new RemoteClient(player.name);
                         //register maze
                         mazewarClient.maze.addClientAt(remoteClient, player.point, player.direction);
