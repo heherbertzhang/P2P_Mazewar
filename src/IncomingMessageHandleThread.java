@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class IncomingMessageHandleThread extends Thread {
 
-    private Hashtable<String, Client> clientTable = null;
     private PriorityBlockingQueue receivedQueue = null;
     private AtomicInteger actionHoldingCount = null;
     private Map<String, MSocket> neighbousSockets = null;
@@ -17,11 +16,11 @@ public class IncomingMessageHandleThread extends Thread {
     private AvoidRepeatence avoidRepeatenceHelper = null;
     private Queue<MPacket> confirmationQueue = null;
     private AtomicInteger numOfPlayer = null;//has to be Atomic for dynamic change of the players
-
+    private String selfName = null;
     public IncomingMessageHandleThread(Queue<MPacket> incoming, Queue receivedQueue, Map<Integer, SenderPacketInfo> resendQueue,
                                        Queue<MPacket> confirmationQueue, AtomicInteger actionHoldingCount,
                                        Map<String, MSocket> neighbours_socket, AtomicInteger currentTimeStamp,
-                                       AvoidRepeatence avoidRepeatence, AtomicInteger numOfPlayer) {
+                                       AvoidRepeatence avoidRepeatence, AtomicInteger numOfPlayer, String selfName) {
         this.receivedQueue = (PriorityBlockingQueue) receivedQueue;
         this.neighbousSockets = neighbours_socket;
         this.actionHoldingCount = actionHoldingCount;
@@ -31,6 +30,7 @@ public class IncomingMessageHandleThread extends Thread {
         this.avoidRepeatenceHelper = avoidRepeatence;
         this.confirmationQueue = confirmationQueue;
         this.numOfPlayer = numOfPlayer;
+        this.selfName = selfName;
     }
 
     public void run() {
@@ -48,6 +48,7 @@ public class IncomingMessageHandleThread extends Thread {
                     case MPacket.ACTION:
                         //// TODO: 2016-02-27 to avoid bug the best we can do is to no check the action holding count
                         MPacket replyMsg = new MPacket(0, 0);
+                        replyMsg.name = selfName;
                         replyMsg.sequenceNumber = headMsg.sequenceNumber;
                         currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
                         replyMsg.timestamp = currentTimeStamp.get();
@@ -136,10 +137,11 @@ public class IncomingMessageHandleThread extends Thread {
 
                         //send back ack first always!!!!!!
                         MPacket reply = new MPacket(0, 0);
+                        reply.name = selfName;
                         reply.sequenceNumber = headMsg.sequenceNumber;
                         currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
                         reply.timestamp = currentTimeStamp.get();
-                        reply.type = MPacket.RECEIVED;
+                        reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
                         MSocket mSocket2 = neighbousSockets.get(headMsg.name);
                         mSocket2.writeObject(reply);
 
