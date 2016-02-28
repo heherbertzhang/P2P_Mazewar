@@ -210,6 +210,7 @@ class ReceivedThread extends Thread {
                 reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
                 MSocket mSocket = neighbourSockets.get(peek.Packet.name);
                 mSocket.writeObject(reply);
+                peek.isReleased = true;
             }
             if (peek.isConfirmed) {
                 //confrimed so we can remove the msg
