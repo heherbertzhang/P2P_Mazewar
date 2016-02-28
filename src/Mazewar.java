@@ -205,8 +205,7 @@ public class Mazewar extends JFrame {
     /**
      * The place where all the pieces are put together.
      */
-    public Mazewar(String namingServerHost, int namingServerPort, int selfPort) throws IOException,
-            ClassNotFoundException, InterruptedException {
+    public Mazewar(String namingServerHost, int namingServerPort, int selfPort) throws IOException{
         super("ECE419 Mazewar");
         consolePrintLn("ECE419 Mazewar started!");
 
@@ -290,7 +289,11 @@ public class Mazewar extends JFrame {
 
         //wait till naming server get the guiclient then start the display
         while (!startRender.get()) {
-            wait(100000);
+            try {
+                wait(100000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
 
         // Create the panel that will display the maze.
@@ -437,6 +440,7 @@ class ServerSocketHandleThread extends Thread{
                 //mazewarClient.add_server_Neighbours_socket(receivedSocket);
             } catch (IOException e) {
                 e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -502,8 +506,10 @@ class NamingServerListenerThread extends Thread {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            Thread.currentThread().interrupt();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
     }
 }
