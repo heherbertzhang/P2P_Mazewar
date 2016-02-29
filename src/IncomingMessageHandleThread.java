@@ -44,7 +44,7 @@ public class IncomingMessageHandleThread extends Thread {
                 //check for the type of the message
                 MPacket headMsg = null;
                 while (headMsg == null) {
-                    headMsg = incomingQueue.poll(5, TimeUnit.SECONDS);
+                    headMsg = incomingQueue.poll(1, TimeUnit.SECONDS);
                 }
                 System.out.println("incoming message: " + headMsg.toString());
                 switch (headMsg.type) {
@@ -90,7 +90,9 @@ public class IncomingMessageHandleThread extends Thread {
                         }*/
                         }
                         MSocket mSocket = neighbousSockets.get(headMsg.name);
+                        System.out.println("get ack's sender "+ headMsg.name);
                         mSocket.writeObject(replyMsg);
+                        System.out.println("sending ack back");
                         //add to the received queue
                         if (!isDuplicated) {
                             //no repeatence so that we can add to the queue
@@ -100,6 +102,7 @@ public class IncomingMessageHandleThread extends Thread {
                                 packetInfo.isReleased = true;
                             }
                             receivedQueue.add(packetInfo);
+                            System.out.println("added to received queue: " + headMsg.toString());
                         }
                         break;
                     case MPacket.RECEIVED:
@@ -121,12 +124,13 @@ public class IncomingMessageHandleThread extends Thread {
                                 currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
                                 senderPacketInfo2.getReleasedFrom(headMsg.name);
                                 if (senderPacketInfo2.getReleasedCount == numOfPlayer.get()) {
-                                    System.out.println("adding to confirmation queue");
+
                                     senderPacketInfo2.releasedReceicedMap.clear();
                                     senderPacketInfo2.ackFromAll.clear();
                                     MPacket event = senderPacketInfo2.packet;
-                                    MPacket toConfirm = new MPacket(event.name, MPacket.CONFIRMATION,
-                                            0/*no need to know event*/, currentTimeStamp.get());
+                                    System.out.println("adding to confirmation queue: " + event.toString());
+                                    MPacket toConfirm = new MPacket(event.name, MPacket.CONFIRMATION, event.event
+                                            /*no need to know event*/, currentTimeStamp.get());
                                     toConfirm.toConfrimSequenceNumber = event.sequenceNumber; //itself's sequence number will be determine by the confirmation thread
                                     confirmationQueue.add(toConfirm);
                                 }
@@ -156,6 +160,7 @@ public class IncomingMessageHandleThread extends Thread {
                                         ((PacketInfo) p).Packet.sequenceNumber == headMsg.toConfrimSequenceNumber) {
                                     ((PacketInfo) p).confirmMsgSequenceNum = headMsg.sequenceNumber;
                                     ((PacketInfo) p).isConfirmed = true;
+                                    System.out.println("set confirmed for:" + ((PacketInfo) p).Packet.toString());
                                     break;
                                 }
                             }
@@ -222,6 +227,7 @@ class ReceivedThread extends Thread {
                 //remove and add to display queue
                 PacketInfo removed = (PacketInfo) receivedQueue.poll();
                 displayQueue.add(removed.Packet);
+                System.out.println("adding to display queue: "+ removed.Packet.toString());
 
                 //decrease the action holding count
                 if (localPlayers.contains(removed.Packet.name)) {
@@ -252,7 +258,7 @@ class DisplayThread extends Thread {
                     poll = displayQueue.poll(3, TimeUnit.SECONDS);
                 }
 
-                if (Debug.debug) System.out.println("ready to take action " + poll.toString());
+                if (Debug.debug) System.out.println("ready to take action !: " + poll.toString());
                 client = clientTable.get(poll.name);
                 if (poll.event == MPacket.UP) {
                     client.forward();
