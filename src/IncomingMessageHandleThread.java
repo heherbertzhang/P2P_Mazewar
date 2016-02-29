@@ -44,7 +44,7 @@ public class IncomingMessageHandleThread extends Thread {
                 //check for the type of the message
                 MPacket headMsg = null;
                 while (headMsg == null) {
-                    headMsg = incomingQueue.poll(1, TimeUnit.SECONDS);
+                    headMsg = incomingQueue.take();
                 }
                 System.out.println("incoming message: " + headMsg.toString());
                 switch (headMsg.type) {
@@ -255,7 +255,7 @@ class DisplayThread extends Thread {
             while (true) {
                 MPacket poll = null;
                 while (poll == null) {
-                    poll = displayQueue.poll(3, TimeUnit.SECONDS);
+                    poll = displayQueue.take();
                 }
 
                 if (Debug.debug) System.out.println("ready to take action !: " + poll.toString());
