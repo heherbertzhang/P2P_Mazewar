@@ -46,7 +46,7 @@ public class ClientEvent {
          * Create a new {@link ClientEvent} from an internal representation.
          */
         private ClientEvent(int event) {
-                assert((event >= 0) && (event <= 4));
+                assert((event >= 0) && (event <= 6));
                 this.event = event;
         }
 

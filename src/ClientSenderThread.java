@@ -12,6 +12,7 @@ public class ClientSenderThread implements Runnable {
     private AtomicInteger lamportClock;
     private Hashtable<Integer, SenderPacketInfo> waitingToResend;
     private Queue incomingQueue;
+
     public ClientSenderThread(AtomicInteger sequencenumber, BlockingQueue<MPacket> eventQueue, Map<String, MSocket> neighbours_socket, Queue<MPacket> incomingQueue, AtomicInteger lamportClock, Hashtable<Integer, SenderPacketInfo> waitingToResend) {
         this.eventQueue = eventQueue;
         this.neighbours_socket = neighbours_socket;
@@ -25,8 +26,9 @@ public class ClientSenderThread implements Runnable {
 
         if (Debug.debug) System.out.println("Starting ClientSenderThread");
 
-        try {
-            while (true) {
+
+        while (true) {
+            try {
                 //Take packet from queue
                 /*
                 System.out.println("eventqueue!!!!!!!");
@@ -45,7 +47,8 @@ public class ClientSenderThread implements Runnable {
 
                 // first broadcast
                 toClient.timestamp = lamportClock.incrementAndGet();
-                toClient.sequenceNumber = this.squenceNumber.incrementAndGet();;
+                toClient.sequenceNumber = this.squenceNumber.incrementAndGet();
+                ;
                 System.out.println("Sending " + toClient.toString());
 
                 //Initlize the List for ack
@@ -61,24 +64,24 @@ public class ClientSenderThread implements Runnable {
                 }
 
 
-
                 for (Map.Entry<String, MSocket> e : neighbours_socket.entrySet()) {
                     MSocket each_client_socket = e.getValue();
                     each_client_socket.writeObject(toClient);
                 }
                 //send to itself
 
-                if(!incomingQueue.offer(toClient)){
+                if (!incomingQueue.offer(toClient)) {
                     assert false;
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Thread.currentThread().interrupt();
         }
-
-
     }
+
+
 }
+
 
 
