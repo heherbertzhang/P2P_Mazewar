@@ -28,11 +28,14 @@ public class ClientListenerThread implements Runnable {
 
                 MPacket received = (MPacket) mSocket.readObject();
 
-                System.out.println("listening: " + received.toString());
-                incomingQueue.add(received);
+                //System.out.println("listening: " + received.toString());
+                if(!incomingQueue.offer(received)){
+                    assert false;
+                }
+                /*
                 for(MPacket packet: incomingQueue){
                     System.out.println("incomingqueue:" + packet.toString());
-                }
+                }*/
                 //System.out.println("added to incoming queue");
             }
         } catch (IOException e) {

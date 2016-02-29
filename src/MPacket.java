@@ -128,8 +128,10 @@ public class MPacket implements Serializable {
                 break;        
         }
         //MPACKET(NAME: name, <typestr: eventStr>, SEQNUM: sequenceNumber)
-        String retString = String.format("MPACKET(NAME: %s, <%s: %s>, SEQNUM: %s)", name, 
-            typeStr, eventStr, sequenceNumber);
+        String toAck = toAckNumber+"";
+        String retString = String.format("MPACKET(NAME: %s, <%s: %s>, SEQNUM: %s, ACK: %s)", name,
+            typeStr, eventStr, sequenceNumber, toAck);
+
         return retString;
     }
 

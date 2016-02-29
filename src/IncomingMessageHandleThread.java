@@ -46,13 +46,13 @@ public class IncomingMessageHandleThread extends Thread {
                 //check for the type of the message
 
                 MPacket headMsg = incomingQueue.take();
-
+                System.out.println("headmsg  : "+ headMsg.toString());
 
                 switch (headMsg.type) {
                     case MPacket.ACTION:
                         //// TODO: 2016-02-27 to avoid bug the best we can do is to no check the action holding count
                         System.out.println("action incoming message: " + headMsg.toString());
-                        if(headMsg.name == selfName){
+                        if(headMsg.name.equals(selfName)){
                             PacketInfo packetInfo = new PacketInfo(headMsg);
                             packetInfo.isAck = true;
 
@@ -64,7 +64,7 @@ public class IncomingMessageHandleThread extends Thread {
                         MPacket replyMsg = new MPacket(0, 0);
                         replyMsg.name = selfName;
                         replyMsg.toAckNumber = headMsg.sequenceNumber;
-                        replyMsg.sequenceNumber = curSequenceNum.incrementAndGet();
+                        //replyMsg.sequenceNumber = curSequenceNum.incrementAndGet();
                         currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
                         replyMsg.timestamp = currentTimeStamp.incrementAndGet();
 
@@ -106,7 +106,7 @@ public class IncomingMessageHandleThread extends Thread {
                         MSocket mSocket = neighbousSockets.get(headMsg.name);
                         //System.out.println("get ack's sender "+ headMsg.name);
                         mSocket.writeObject(replyMsg);
-                        System.out.println("sending reply message for action: " + replyMsg.toString());
+                        System.out.println("sending reply message for action: " + replyMsg.toString() + " to " + headMsg.name);
                         //System.out.println("sending ack back:" + replyMsg.toString());
                         //add to the received queue
                         if (!isDuplicated) {
@@ -174,6 +174,7 @@ public class IncomingMessageHandleThread extends Thread {
                         //set the message to confirmed on the received queue by finding it first
                         //but will not remove it from the queue since only the head of the queue can be removed and
                         //add to the display queue
+                        System.out.println("confirmation incoming:" + headMsg.toString() + " confirm " + headMsg.toConfrimSequenceNumber);
                         if(headMsg.name.equals(selfName)){
                             setConfirmed(headMsg);
                             break;
@@ -182,7 +183,7 @@ public class IncomingMessageHandleThread extends Thread {
                         MPacket reply = new MPacket(0, 0);
                         reply.name = selfName;
                         reply.toAckNumber = headMsg.sequenceNumber;
-                        reply.sequenceNumber = curSequenceNum.incrementAndGet();
+                        //reply.sequenceNumber = curSequenceNum.incrementAndGet();
                         currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
                         reply.timestamp = currentTimeStamp.incrementAndGet();
                         reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
@@ -253,7 +254,7 @@ class ReceivedThread extends Thread {
                 MPacket reply = new MPacket(0, 0);
                 reply.name = selfName;
                 reply.toAckNumber = peek.Packet.sequenceNumber;
-                reply.sequenceNumber = curSequenceNum.incrementAndGet();
+                //reply.sequenceNumber = curSequenceNum.incrementAndGet();
                 reply.timestamp = currentTimeStamp.incrementAndGet();
                 reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
                 MSocket mSocket = neighbourSockets.get(peek.Packet.name);

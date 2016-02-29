@@ -67,7 +67,10 @@ public class ClientSenderThread implements Runnable {
                     each_client_socket.writeObject(toClient);
                 }
                 //send to itself
-                incomingQueue.add(toClient);
+
+                if(!incomingQueue.offer(toClient)){
+                    assert false;
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
