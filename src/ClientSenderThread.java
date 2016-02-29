@@ -9,14 +9,12 @@ public class ClientSenderThread implements Runnable {
     private BlockingQueue<MPacket> eventQueue = null;
     private Map<String, MSocket> neighbours_socket;
     private AtomicInteger squenceNumber;
-    private Queue<MPacket> receivedQueue = null;
     private AtomicInteger lamportClock;
     private Hashtable<Integer, SenderPacketInfo> waitingToResend;
 
     public ClientSenderThread(AtomicInteger sequencenumber, BlockingQueue<MPacket> eventQueue, Map<String, MSocket> neighbours_socket, Queue<MPacket> receivedQueue, AtomicInteger lamportClock, Hashtable<Integer, SenderPacketInfo> waitingToResend) {
         this.eventQueue = eventQueue;
         this.neighbours_socket = neighbours_socket;
-        this.receivedQueue = receivedQueue;
         this.lamportClock = lamportClock;
         this.waitingToResend = waitingToResend;
         this.squenceNumber = sequencenumber;
@@ -34,9 +32,9 @@ public class ClientSenderThread implements Runnable {
                     System.out.println(p.toString());
                 }
                 System.out.println("eventqueue end!!!!!!!!");
-                
+
                 toClient = (MPacket) eventQueue.take();
-                if (Debug.debug) System.out.println("Sending " + toClient);
+
                 //mSocket.writeObject(toClient);
 
 
@@ -54,6 +52,7 @@ public class ClientSenderThread implements Runnable {
                 SenderPacketInfo info = new SenderPacketInfo(All_neighbour, physicalTime, toClient);
                 waitingToResend.put(toClient.sequenceNumber, info);//put to wait to resend queue
 
+                System.out.println("Sending " + toClient.toString());
                 for (Map.Entry<String, MSocket> e : neighbours_socket.entrySet()) {
                     MSocket each_client_socket = e.getValue();
                     each_client_socket.writeObject(toClient);

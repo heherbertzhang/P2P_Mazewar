@@ -35,6 +35,7 @@ public class MPacket implements Serializable {
     
     //The sequence number of the event
     public int sequenceNumber;
+    public int toAckNumber;
     public int toConfrimSequenceNumber;
 
     //These are used to initialize the board
@@ -118,6 +119,9 @@ public class MPacket implements Serializable {
                 break;
             case 207:
                 eventStr = "MOVE_BULLET";
+                break;
+            case 0:
+                eventStr = "DEFAULT";
                 break;
             default:
                 eventStr = "ERROR";

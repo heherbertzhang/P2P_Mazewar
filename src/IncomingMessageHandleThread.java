@@ -17,10 +17,11 @@ public class IncomingMessageHandleThread extends Thread {
     private Queue<MPacket> confirmationQueue = null;
     private AtomicInteger numOfPlayer = null;//has to be Atomic for dynamic change of the players
     private String selfName = null;
+    private AtomicInteger curSequenceNum = null;
     public IncomingMessageHandleThread(Queue<MPacket> incoming, Queue receivedQueue, Map<Integer, SenderPacketInfo> resendQueue,
                                        Queue<MPacket> confirmationQueue, AtomicInteger actionHoldingCount,
                                        Map<String, MSocket> neighbours_socket, AtomicInteger currentTimeStamp,
-                                       AvoidRepeatence avoidRepeatence, AtomicInteger numOfPlayer, String selfName) {
+                                       AvoidRepeatence avoidRepeatence, AtomicInteger numOfPlayer, String selfName, AtomicInteger sequenceNumber) {
         this.receivedQueue = (PriorityBlockingQueue) receivedQueue;
         this.neighbousSockets = neighbours_socket;
         this.actionHoldingCount = actionHoldingCount;
@@ -31,6 +32,7 @@ public class IncomingMessageHandleThread extends Thread {
         this.confirmationQueue = confirmationQueue;
         this.numOfPlayer = numOfPlayer;
         this.selfName = selfName;
+        this.curSequenceNum = sequenceNumber;
     }
 
     public void run() {
@@ -46,13 +48,14 @@ public class IncomingMessageHandleThread extends Thread {
                 while (headMsg == null) {
                     headMsg = incomingQueue.take();
                 }
-                //System.out.println("incoming message: " + headMsg.toString());
+                System.out.println("incoming message: " + headMsg.toString());
                 switch (headMsg.type) {
                     case MPacket.ACTION:
                         //// TODO: 2016-02-27 to avoid bug the best we can do is to no check the action holding count
                         MPacket replyMsg = new MPacket(0, 0);
                         replyMsg.name = selfName;
-                        replyMsg.sequenceNumber = headMsg.sequenceNumber;
+                        replyMsg.toAckNumber = headMsg.sequenceNumber;
+                        replyMsg.sequenceNumber = curSequenceNum.incrementAndGet();
                         currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
                         replyMsg.timestamp = currentTimeStamp.incrementAndGet();
                         boolean isDuplicated = avoidRepeatenceHelper.checkRepeatenceForProcess(headMsg.name, headMsg.sequenceNumber);
@@ -69,31 +72,31 @@ public class IncomingMessageHandleThread extends Thread {
                         } else {
                             //duplicate message need to check for the head of the queue to determine to resend ack or released msg
                             //find the message first
-                            PacketInfo packetInfo = null;
-                            while (packetInfo == null) {
-                                packetInfo = (PacketInfo) receivedQueue.peek();
-                                if(packetInfo == null) {
+                            PacketInfo receivedHeadPacketInfo = null;
+                            while (receivedHeadPacketInfo == null) {
+                                receivedHeadPacketInfo = (PacketInfo) receivedQueue.peek();
+                                if(receivedHeadPacketInfo == null) {
                                     System.out.println("something wrong since the received queue is null at this point");
                                 }
                             }
-                            if (packetInfo.Packet.sequenceNumber == headMsg.sequenceNumber) {
+                            if (receivedHeadPacketInfo.Packet.sequenceNumber == headMsg.sequenceNumber) {
                                 replyMsg.type = MPacket.RELEASED;
                             } else {
                                 replyMsg.type = MPacket.RECEIVED;
                             }
                             //TODO: the following is more accurate method to check but may take more time?
-                        /*for(Object packetInfo : receivedQueue){
-                            if(((PacketInfo) packetInfo).Packet.sequenceNumber == headMsg.sequenceNumber){
-                                if(((PacketInfo) packetInfo).isReleased){
+                        /*for(Object receivedHeadPacketInfo : receivedQueue){
+                            if(((PacketInfo) receivedHeadPacketInfo).Packet.sequenceNumber == headMsg.sequenceNumber){
+                                if(((PacketInfo) receivedHeadPacketInfo).isReleased){
 
                                 }
                             }
                         }*/
                         }
                         MSocket mSocket = neighbousSockets.get(headMsg.name);
-                        System.out.println("get ack's sender "+ headMsg.name);
+                        //System.out.println("get ack's sender "+ headMsg.name);
                         mSocket.writeObject(replyMsg);
-                        System.out.println("sending ack back");
+                        //System.out.println("sending ack back:" + replyMsg.toString());
                         //add to the received queue
                         if (!isDuplicated) {
                             System.out.println("not duplicated action msg:" + headMsg.toString());
@@ -108,6 +111,7 @@ public class IncomingMessageHandleThread extends Thread {
                         }
                         break;
                     case MPacket.RECEIVED:
+                        System.out.println("type is received!!!!!!!!!:" + headMsg.toString());
                         //find from the wait to resend queue and then make it get one acknowledged from the player
                         SenderPacketInfo senderPacketInfo = resendQueue.get(headMsg.sequenceNumber);
                         if (senderPacketInfo != null) {
@@ -120,13 +124,21 @@ public class IncomingMessageHandleThread extends Thread {
                         break;
                     case MPacket.RELEASED:
                         SenderPacketInfo senderPacketInfo2 = resendQueue.get(headMsg.sequenceNumber);
+                        System.out.println("sender p 2:" + senderPacketInfo2.toString());
+                        System.out.println("resend queue :");
+                        for(Map.Entry e : resendQueue.entrySet()){
+                            System.out.println(e.getKey());
+                            System.out.println(e.getValue().toString());
+                            System.out.println("|");
+                        }
+                        System.out.println("resendqueue end");
                         if (senderPacketInfo2 != null) {
                             //check if already released, if so do not increase lamport clock TODO
                             if (!senderPacketInfo2.isGotRleasedFrom(headMsg.name)) {
                                 currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp)+1);
                                 senderPacketInfo2.getReleasedFrom(headMsg.name);
+                                System.out.println("now have released: " + senderPacketInfo2.getReleasedCount);
                                 if (senderPacketInfo2.getReleasedCount == numOfPlayer.get()) {
-
                                     senderPacketInfo2.releasedReceicedMap.clear();
                                     senderPacketInfo2.ackFromAll.clear();
                                     MPacket event = senderPacketInfo2.packet;
@@ -148,7 +160,8 @@ public class IncomingMessageHandleThread extends Thread {
                         //send back ack first always!!!!!!
                         MPacket reply = new MPacket(0, 0);
                         reply.name = selfName;
-                        reply.sequenceNumber = headMsg.sequenceNumber;
+                        reply.toAckNumber = headMsg.sequenceNumber;
+                        reply.sequenceNumber = curSequenceNum.incrementAndGet();
                         currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
                         reply.timestamp = currentTimeStamp.incrementAndGet();
                         reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
@@ -215,7 +228,8 @@ class ReceivedThread extends Thread {
                 //if not released yet we need to release it when it's head and send back release message
                 MPacket reply = new MPacket(0, 0);
                 reply.name = selfName;
-                reply.sequenceNumber = peek.Packet.sequenceNumber;
+                reply.toAckNumber = peek.Packet.sequenceNumber;
+                reply.sequenceNumber = currentTimeStamp.incrementAndGet();
                 reply.timestamp = currentTimeStamp.incrementAndGet();
                 reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
                 MSocket mSocket = neighbourSockets.get(peek.Packet.name);
