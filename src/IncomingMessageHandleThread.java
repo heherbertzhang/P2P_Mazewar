@@ -54,7 +54,7 @@ public class IncomingMessageHandleThread extends Thread {
                         replyMsg.name = selfName;
                         replyMsg.sequenceNumber = headMsg.sequenceNumber;
                         currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
-                        replyMsg.timestamp = currentTimeStamp.get();
+                        replyMsg.timestamp = currentTimeStamp.incrementAndGet();
                         boolean isDuplicated = avoidRepeatenceHelper.checkRepeatenceForProcess(headMsg.name, headMsg.sequenceNumber);
                         if (!isDuplicated) {
 
@@ -123,7 +123,7 @@ public class IncomingMessageHandleThread extends Thread {
                         if (senderPacketInfo2 != null) {
                             //check if already released, if so do not increase lamport clock TODO
                             if (!senderPacketInfo2.isGotRleasedFrom(headMsg.name)) {
-                                currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
+                                currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp)+1);
                                 senderPacketInfo2.getReleasedFrom(headMsg.name);
                                 if (senderPacketInfo2.getReleasedCount == numOfPlayer.get()) {
 
@@ -132,7 +132,7 @@ public class IncomingMessageHandleThread extends Thread {
                                     MPacket event = senderPacketInfo2.packet;
                                     System.out.println("adding to confirmation queue: " + event.toString());
                                     MPacket toConfirm = new MPacket(event.name, MPacket.CONFIRMATION, event.event
-                                            /*no need to know event*/, currentTimeStamp.get());
+                                            /*no need to know event*/, currentTimeStamp.incrementAndGet());
                                     toConfirm.toConfrimSequenceNumber = event.sequenceNumber; //itself's sequence number will be determine by the confirmation thread
                                     confirmationQueue.add(toConfirm);
                                 }
@@ -150,7 +150,7 @@ public class IncomingMessageHandleThread extends Thread {
                         reply.name = selfName;
                         reply.sequenceNumber = headMsg.sequenceNumber;
                         currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
-                        reply.timestamp = currentTimeStamp.get();
+                        reply.timestamp = currentTimeStamp.incrementAndGet();
                         reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
                         MSocket mSocket2 = neighbousSockets.get(headMsg.name);
                         mSocket2.writeObject(reply);
@@ -216,8 +216,7 @@ class ReceivedThread extends Thread {
                 MPacket reply = new MPacket(0, 0);
                 reply.name = selfName;
                 reply.sequenceNumber = peek.Packet.sequenceNumber;
-                currentTimeStamp.set(Math.max(currentTimeStamp.get(), peek.Packet.timestamp) + 1);//update currentTimeStamp
-                reply.timestamp = currentTimeStamp.get();
+                reply.timestamp = currentTimeStamp.incrementAndGet();
                 reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
                 MSocket mSocket = neighbourSockets.get(peek.Packet.name);
                 mSocket.writeObject(reply);
