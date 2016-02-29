@@ -11,29 +11,34 @@ public class ClientSenderThread implements Runnable {
     private AtomicInteger squenceNumber;
     private AtomicInteger lamportClock;
     private Hashtable<Integer, SenderPacketInfo> waitingToResend;
-
-    public ClientSenderThread(AtomicInteger sequencenumber, BlockingQueue<MPacket> eventQueue, Map<String, MSocket> neighbours_socket, Queue<MPacket> receivedQueue, AtomicInteger lamportClock, Hashtable<Integer, SenderPacketInfo> waitingToResend) {
+    private Queue incomingQueue;
+    public ClientSenderThread(AtomicInteger sequencenumber, BlockingQueue<MPacket> eventQueue, Map<String, MSocket> neighbours_socket, Queue<MPacket> incomingQueue, AtomicInteger lamportClock, Hashtable<Integer, SenderPacketInfo> waitingToResend) {
         this.eventQueue = eventQueue;
         this.neighbours_socket = neighbours_socket;
         this.lamportClock = lamportClock;
         this.waitingToResend = waitingToResend;
         this.squenceNumber = sequencenumber;
+        this.incomingQueue = incomingQueue;
     }
 
     public void run() {
-        MPacket toClient = null;
+
         if (Debug.debug) System.out.println("Starting ClientSenderThread");
 
         try {
             while (true) {
                 //Take packet from queue
+                /*
                 System.out.println("eventqueue!!!!!!!");
                 for(MPacket p : eventQueue){
                     System.out.println(p.toString());
                 }
                 System.out.println("eventqueue end!!!!!!!!");
+                */
 
-                toClient = (MPacket) eventQueue.take();
+                MPacket toClient = (MPacket) eventQueue.take();//must declare here as temp variable!!!!!!!!!!!!!!!!!!!
+                //!!!!!!!!!!!!!!!!cannot declare out side since it will be reused that previous value!!!!!!!!!!!!!!!!!
+                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                 //mSocket.writeObject(toClient);
 
@@ -41,6 +46,7 @@ public class ClientSenderThread implements Runnable {
                 // first broadcast
                 toClient.timestamp = lamportClock.incrementAndGet();
                 toClient.sequenceNumber = this.squenceNumber.incrementAndGet();;
+                System.out.println("Sending " + toClient.toString());
 
                 //Initlize the List for ack
                 Hashtable<String, Boolean> All_neighbour = new Hashtable<String, Boolean>();
@@ -50,15 +56,21 @@ public class ClientSenderThread implements Runnable {
                 // Initlize time
                 long physicalTime = System.currentTimeMillis();
                 SenderPacketInfo info = new SenderPacketInfo(All_neighbour, physicalTime, toClient);
-                waitingToResend.put(toClient.sequenceNumber, info);//put to wait to resend queue
+                synchronized (waitingToResend) {
+                    waitingToResend.put(toClient.sequenceNumber, info);//put to wait to resend queue
+                }
 
-                System.out.println("Sending " + toClient.toString());
+
+
                 for (Map.Entry<String, MSocket> e : neighbours_socket.entrySet()) {
                     MSocket each_client_socket = e.getValue();
                     each_client_socket.writeObject(toClient);
                 }
+                //send to itself
+                incomingQueue.add(toClient);
             }
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
             Thread.currentThread().interrupt();
         }
 

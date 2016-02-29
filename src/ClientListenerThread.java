@@ -15,7 +15,7 @@ public class ClientListenerThread implements Runnable {
     }
 
     public void run() {
-        MPacket received = null;
+
 
         //run dequeue thread
         //new IncomingMessageHandleThread(incomingQueue, receivedQueue, displayQueue, actionHoldingCount, neighbours_socket, clientTable).start();
@@ -25,11 +25,14 @@ public class ClientListenerThread implements Runnable {
 
         try {
             while (true) {
-                while(received == null) {
-                    received = (MPacket) mSocket.readObject();
-                }
-                //System.out.println("listening: " + received.toString());
+
+                MPacket received = (MPacket) mSocket.readObject();
+
+                System.out.println("listening: " + received.toString());
                 incomingQueue.add(received);
+                for(MPacket packet: incomingQueue){
+                    System.out.println("incomingqueue:" + packet.toString());
+                }
                 //System.out.println("added to incoming queue");
             }
         } catch (IOException e) {

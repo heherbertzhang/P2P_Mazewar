@@ -49,7 +49,9 @@ public abstract class LocalClient extends Client {
 
     public void addActionEvent(int action) throws InterruptedException {
         actionCount.incrementAndGet();
-        eventQueue.put(new MPacket(getName(), MPacket.ACTION, action));
+        MPacket packet = new MPacket(getName(), MPacket.ACTION, action);
+        eventQueue.put(packet);
+        System.out.println("GUI putting to event queue:" + packet);
     }
 
     public void sendKillClient(Player player, Player sourcePlayer) {

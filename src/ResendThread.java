@@ -18,17 +18,21 @@ public class ResendThread extends Thread {
     @Override
     public void run() {
         while(true){
-            for (Map.Entry<Integer,SenderPacketInfo> e: waitToResendQueue.entrySet()){
-                long currenttime = System.currentTimeMillis();
-                if (currenttime - e.getValue().physicalTime > timeout){
-                    // means timeout
-                    // resend the messages to all the clients who didn't give me respond
+            synchronized (waitToResendQueue) {
+                for (Map.Entry<Integer, SenderPacketInfo> e : waitToResendQueue.entrySet()) {
+                    long currenttime = System.currentTimeMillis();
+                    if (currenttime - e.getValue().physicalTime > timeout) {
+                        // means timeout
+                        // resend the messages to all the clients who didn't give me respond
 
-                    Hashtable<String, Boolean> lostClients= (Hashtable<String, Boolean>) e.getValue().ackFromAll;
-                    for (Map.Entry<String, Boolean> k : lostClients.entrySet()) {
-                        MSocket lostClientSocket = neighbours_socket.get(k.getKey());
-                        lostClientSocket.writeObject(e.getValue().packet);
-                        System.out.println("resending to client:" + k.getKey() + " and packet:" + e.getValue().packet.toString());
+                        Hashtable<String, Boolean> lostClients = (Hashtable<String, Boolean>) e.getValue().ackFromAll;
+                        //update time
+                        e.getValue().physicalTime = currenttime;
+                        for (Map.Entry<String, Boolean> k : lostClients.entrySet()) {
+                            MSocket lostClientSocket = neighbours_socket.get(k.getKey());
+                            lostClientSocket.writeObject(e.getValue().packet);
+                            System.out.println("resending to client:" + k.getKey() + " and packet:" + e.getValue().packet.toString());
+                        }
                     }
                 }
             }

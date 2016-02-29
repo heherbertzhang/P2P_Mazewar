@@ -24,6 +24,7 @@ public class SenderPacketInfo {
         ackFromAll.remove(name);
     }
     public void getReleasedFrom(String name){
+        assert ackFromAll.size()==1;
         ackFromAll.remove(name);
         releasedReceicedMap.put(name, true);
         getReleasedCount += 1;

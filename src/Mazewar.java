@@ -219,10 +219,10 @@ public class Mazewar extends JFrame {
         this.serverSocket = new MServerSocket(selfPort);
 		this.receivedQueue = new PriorityBlockingQueue<MPacket>(50, new PacketComparator()) ;
 		this.displayQueue = new LinkedBlockingQueue<MPacket>(50);
-        this.incomingQueue =  new LinkedBlockingQueue<MPacket>();
+        this.incomingQueue =  new LinkedBlockingQueue<MPacket>(100);
         this.actionHoldingCount = new AtomicInteger(0);
         this.localPlayers = new LinkedList<String>();
-        this.numberOfPlayers = new AtomicInteger(0);
+        this.numberOfPlayers = new AtomicInteger(1);
         this.curTimeStamp = new AtomicInteger(0);
         this.sequenceNumber = new AtomicInteger(0);
         this.neighbours = new Hashtable<String, IpLocation>();
@@ -378,16 +378,16 @@ public class Mazewar extends JFrame {
     private void startThreads() {
 
         //Start a new sender thread
-        new Thread(new ClientSenderThread(sequenceNumber,eventQueue, socketsForBroadcast, receivedQueue, curTimeStamp, waitToResendQueue)).start();
+        new Thread(new ClientSenderThread(sequenceNumber,eventQueue, socketsForBroadcast, incomingQueue, curTimeStamp, waitToResendQueue)).start();
         //Start a new listener thread
         //new Thread(new ClientListenerThread(socketsForBroadcast, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
-        new ConfirmationBroadcast(sequenceNumber, confirmationQueue, socketsForBroadcast, waitToResendQueue).start();
+        new ConfirmationBroadcast(sequenceNumber, confirmationQueue, socketsForBroadcast, waitToResendQueue, (BlockingQueue) incomingQueue).start();
         new ResendThread(timeout,waitToResendQueue,socketsForBroadcast).start();
 
         new IncomingMessageHandleThread(incomingQueue, receivedQueue, waitToResendQueue, confirmationQueue,
-                actionHoldingCount, socketsForBroadcast, curTimeStamp, avoidRepeatenceHelper, numberOfPlayers, playerName).start();
+                actionHoldingCount, socketsForBroadcast, curTimeStamp, avoidRepeatenceHelper, numberOfPlayers, playerName, sequenceNumber).start();
         new ReceivedThread(receivedQueue, displayQueue, curTimeStamp, socketsForBroadcast,
-                localPlayers, actionHoldingCount, playerName).start();
+                localPlayers, actionHoldingCount, playerName,sequenceNumber).start();
         new DisplayThread(displayQueue, clientTable).start();
 
 
@@ -461,13 +461,11 @@ class NamingServerListenerThread extends Thread {
                 IpBroadCastPacket result = (IpBroadCastPacket) objectInputStream.readObject();
                 Map<String, IpLocation> clientTable = result.mClientTable;
                 for (Map.Entry<String, IpLocation> e: clientTable.entrySet()){
-                    System.out.println(e.getKey());
-                    System.out.println(e.getValue().hostAddress);
-
-                    mazewarClient.addNeighbours(e.getKey(), e.getValue());
-                    System.out.println("yes add neighbour");
-                    mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress,(e.getValue()).port));
-                    System.out.println("add neighbour socket!");
+                    if(!e.getKey().equals(mazewarClient.playerName)) {
+                        mazewarClient.addNeighbours(e.getKey(), e.getValue());
+                        mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress, (e.getValue()).port));
+                        System.out.println("add neighbour socket!");
+                    }
                 }
                 List<Player> players = result.players;
 
