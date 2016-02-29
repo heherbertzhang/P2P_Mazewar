@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class IncomingMessageHandleThread extends Thread {
 
-    private PriorityBlockingQueue receivedQueue = null;
+    private PriorityBlockingQueue<PacketInfo> receivedQueue = null;
     private AtomicInteger actionHoldingCount = null;
     private Map<String, MSocket> neighbousSockets = null;
     private LinkedBlockingQueue<MPacket> incomingQueue = null;
@@ -18,7 +18,7 @@ public class IncomingMessageHandleThread extends Thread {
     private AtomicInteger numOfPlayer = null;//has to be Atomic for dynamic change of the players
     private String selfName = null;
     private AtomicInteger curSequenceNum = null;
-    public IncomingMessageHandleThread(Queue<MPacket> incoming, Queue receivedQueue, Map<Integer, SenderPacketInfo> resendQueue,
+    public IncomingMessageHandleThread(Queue<MPacket> incoming, Queue<PacketInfo> receivedQueue, Map<Integer, SenderPacketInfo> resendQueue,
                                        Queue<MPacket> confirmationQueue, AtomicInteger actionHoldingCount,
                                        Map<String, MSocket> neighbours_socket, AtomicInteger currentTimeStamp,
                                        AvoidRepeatence avoidRepeatence, AtomicInteger numOfPlayer, String selfName, AtomicInteger sequenceNumber) {
@@ -53,13 +53,17 @@ public class IncomingMessageHandleThread extends Thread {
                         //// TODO: 2016-02-27 to avoid bug the best we can do is to no check the action holding count
                         System.out.println("action incoming message: " + headMsg.toString());
                         if(headMsg.name.equals(selfName)){
+                            System.out.println("self action");
                             PacketInfo packetInfo = new PacketInfo(headMsg);
                             packetInfo.isAck = true;
 
                             packetInfo.isReleased = true;
-                            receivedQueue.add(packetInfo);
+                            System.out.println("self action offer");
+                            if(!receivedQueue.offer(packetInfo)){
+                                assert(1==0);
+                            }
                             System.out.println("added to received queue directly: " + headMsg.toString());
-                            break;
+                            break;//change  to continue
                         }
                         MPacket replyMsg = new MPacket(0, 0);
                         replyMsg.name = selfName;
@@ -200,6 +204,7 @@ public class IncomingMessageHandleThread extends Thread {
         } catch (Exception e) {
             Thread.currentThread().interrupt();
         }
+        assert (false); //out of for loop
 
     }
 

@@ -46,17 +46,17 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @version $Id: Mazewar.java 371 2004-02-10 21:55:32Z geoffw $
  */
 
-class PacketComparator implements Comparator<MPacket>{
+class PacketINFOComparator implements Comparator<PacketInfo>{
     @Override
-    public int compare(MPacket x, MPacket y){
-        if(x.timestamp < y.timestamp){
+    public int compare(PacketInfo x, PacketInfo y){
+        if(x.Packet.timestamp < y.Packet.timestamp){
             return -1;
         }
-        else if(x.timestamp > y.timestamp){
+        else if(x.Packet.timestamp > y.Packet.timestamp){
             return 1;
         }
 		else{
-			return x.name.compareTo(y.name);
+			return x.Packet.name.compareTo(y.Packet.name);
 		}
     }
 }
@@ -64,7 +64,7 @@ class PacketComparator implements Comparator<MPacket>{
 
 public class Mazewar extends JFrame {
     private MServerSocket serverSocket;
-	private Queue<MPacket> receivedQueue;
+	private Queue<PacketInfo> receivedQueue;
 	private Queue<MPacket> displayQueue;
     private Queue<MPacket> incomingQueue;
     protected List<String> localPlayers = null;
@@ -217,7 +217,7 @@ public class Mazewar extends JFrame {
         this.selfPort = selfPort;
         this.waitToResendQueue = new Hashtable<Integer,SenderPacketInfo>();
         this.serverSocket = new MServerSocket(selfPort);
-		this.receivedQueue = new PriorityBlockingQueue<MPacket>(50, new PacketComparator()) ;
+		this.receivedQueue = new PriorityBlockingQueue<PacketInfo>(100, new PacketINFOComparator()) ;
 		this.displayQueue = new LinkedBlockingQueue<MPacket>(50);
         this.incomingQueue =  new LinkedBlockingQueue<MPacket>(100);
         this.actionHoldingCount = new AtomicInteger(0);

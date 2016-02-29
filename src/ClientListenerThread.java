@@ -50,7 +50,7 @@ public class ClientListenerThread implements Runnable {
 
 
 /*
-class PacketComparator implements Comparator<MPacket>{
+class PacketINFOComparator implements Comparator<MPacket>{
     @Override
     public int compare(MPacket x, MPacket y){
         if(x.sequenceNumber < y.sequenceNumber){
