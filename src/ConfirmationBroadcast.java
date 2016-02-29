@@ -26,17 +26,17 @@ public class ConfirmationBroadcast  extends Thread {
         try{
             while (true){
                 toClient = (MPacket) confirmation.take();
-                toClient.sequenceNumber = sequenceNumber.get();
+                toClient.sequenceNumber = sequenceNumber.incrementAndGet();
                 //Initlize the List for ack
                 Hashtable<String, Boolean> All_neighbour = new Hashtable<String, Boolean>();
                 for (Map.Entry<String, MSocket> e : this.neighbours_socket.entrySet()) {
                     All_neighbour.put(e.getKey(), false);
                 }
-
-
                 // Initlize time
-                long time = System.currentTimeMillis();
-                SenderPacketInfo info = new SenderPacketInfo(All_neighbour, this.sequenceNumber.get(), time, toClient);
+                long physicalTime = System.currentTimeMillis();
+                SenderPacketInfo info = new SenderPacketInfo(All_neighbour, physicalTime, toClient);
+                waitingToResend.put(toClient.sequenceNumber, info);//may need resend if drop the package
+
                 for (Map.Entry<String, MSocket> e : neighbours_socket.entrySet()) {
                     MSocket each_client_socket = e.getValue();
                     each_client_socket.writeObject(toClient);

@@ -20,7 +20,7 @@ public class ResendThread extends Thread {
         while(true){
             for (Map.Entry<Integer,SenderPacketInfo> e: waitToResendQueue.entrySet()){
                 long currenttime = System.currentTimeMillis();
-                if (currenttime - e.getValue().time > timeout){
+                if (currenttime - e.getValue().physicalTime > timeout){
                     // means timeout
                     // resend the messages to all the clients who didn't give me respond
 
@@ -28,6 +28,7 @@ public class ResendThread extends Thread {
                     for (Map.Entry<String, Boolean> k : lostClients.entrySet()) {
                         MSocket lostClientSocket = neighbours_socket.get(k.getKey());
                         lostClientSocket.writeObject(e.getValue().packet);
+                        System.out.println("resending to client:" + k.getKey() + " and packet:" + e.getValue().packet.toString());
                     }
                 }
             }

@@ -28,9 +28,9 @@ public class ClientListenerThread implements Runnable {
                 while(received == null) {
                     received = (MPacket) mSocket.readObject();
                 }
-                System.out.println("listening: " + received.toString());
+                //System.out.println("listening: " + received.toString());
                 incomingQueue.add(received);
-                System.out.println("added to incoming queue");
+                //System.out.println("added to incoming queue");
             }
         } catch (IOException e) {
             Thread.currentThread().interrupt();

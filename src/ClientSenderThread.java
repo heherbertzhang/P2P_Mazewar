@@ -29,6 +29,12 @@ public class ClientSenderThread implements Runnable {
         try {
             while (true) {
                 //Take packet from queue
+                System.out.println("eventqueue!!!!!!!");
+                for(MPacket p : eventQueue){
+                    System.out.println(p.toString());
+                }
+                System.out.println("eventqueue end!!!!!!!!");
+                
                 toClient = (MPacket) eventQueue.take();
                 if (Debug.debug) System.out.println("Sending " + toClient);
                 //mSocket.writeObject(toClient);
@@ -43,10 +49,11 @@ public class ClientSenderThread implements Runnable {
                 for (Map.Entry<String, MSocket> e : this.neighbours_socket.entrySet()) {
                     All_neighbour.put(e.getKey(), false);
                 }
-
                 // Initlize time
-                long time = System.currentTimeMillis();
-                SenderPacketInfo info = new SenderPacketInfo(All_neighbour, this.squenceNumber.get(), time, toClient);
+                long physicalTime = System.currentTimeMillis();
+                SenderPacketInfo info = new SenderPacketInfo(All_neighbour, physicalTime, toClient);
+                waitingToResend.put(toClient.sequenceNumber, info);//put to wait to resend queue
+
                 for (Map.Entry<String, MSocket> e : neighbours_socket.entrySet()) {
                     MSocket each_client_socket = e.getValue();
                     each_client_socket.writeObject(toClient);

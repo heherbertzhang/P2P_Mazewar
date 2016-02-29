@@ -46,7 +46,7 @@ public class IncomingMessageHandleThread extends Thread {
                 while (headMsg == null) {
                     headMsg = incomingQueue.take();
                 }
-                System.out.println("incoming message: " + headMsg.toString());
+                //System.out.println("incoming message: " + headMsg.toString());
                 switch (headMsg.type) {
                     case MPacket.ACTION:
                         //// TODO: 2016-02-27 to avoid bug the best we can do is to no check the action holding count
@@ -57,6 +57,7 @@ public class IncomingMessageHandleThread extends Thread {
                         replyMsg.timestamp = currentTimeStamp.get();
                         boolean isDuplicated = avoidRepeatenceHelper.checkRepeatenceForProcess(headMsg.name, headMsg.sequenceNumber);
                         if (!isDuplicated) {
+
                             if (actionHoldingCount.get() == 0) {
                                 //can send back release message
                                 replyMsg.type = MPacket.RELEASED;
@@ -95,6 +96,7 @@ public class IncomingMessageHandleThread extends Thread {
                         System.out.println("sending ack back");
                         //add to the received queue
                         if (!isDuplicated) {
+                            System.out.println("not duplicated action msg:" + headMsg.toString());
                             //no repeatence so that we can add to the queue
                             PacketInfo packetInfo = new PacketInfo(headMsg);
                             packetInfo.isAck = true;
