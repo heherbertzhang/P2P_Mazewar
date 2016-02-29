@@ -30,7 +30,7 @@ public class ClientListenerThread implements Runnable {
                 }
                 System.out.println("listening: " + received.toString());
                 incomingQueue.add(received);
-                System.out.println("added to received queue");
+                System.out.println("added to incoming queue");
             }
         } catch (IOException e) {
             Thread.currentThread().interrupt();
