@@ -52,7 +52,7 @@ public class IncomingMessageHandleThread extends Thread {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println("headmsg  : " + headMsg.toString());
+            System.out.println("incoming message  : " + headMsg.toString());
 
             switch (headMsg.type) {
                 case MPacket.ACTION:
@@ -64,7 +64,6 @@ public class IncomingMessageHandleThread extends Thread {
                         packetInfo.isAck = true;
 
                         packetInfo.isReleased = true;
-                        System.out.println("self action offer");
                         if (!receivedQueue.offer(packetInfo)) {
                             assert (1 == 0);
                         }
@@ -128,11 +127,11 @@ public class IncomingMessageHandleThread extends Thread {
                             packetInfo.isReleased = true;
                         }
                         receivedQueue.add(packetInfo);
-                        System.out.println("added to received queue: " + headMsg.toString());
+                        //System.out.println("added to received queue: " + headMsg.toString());
                     }
                     break;
                 case MPacket.RECEIVED:
-                    System.out.println("type is received!!!!!!!!!:" + headMsg.toString());
+                    //System.out.println("type is received!!!!!!!!!:" + headMsg.toString());
                     //find from the wait to resend queue and then make it get one acknowledged from the player
                     SenderPacketInfo senderPacketInfo = resendQueue.get(headMsg.toAckNumber);
                     if (senderPacketInfo != null) {
@@ -145,17 +144,17 @@ public class IncomingMessageHandleThread extends Thread {
                     break;
                 case MPacket.RELEASED:
                     SenderPacketInfo senderPacketInfo2 = resendQueue.get(headMsg.toAckNumber);
-                    System.out.println("sender p 2:" + senderPacketInfo2.packet.toString());
+                    /*System.out.println("sender p 2:" + senderPacketInfo2.packet.toString());
                     System.out.println("resend queue :");
                     for (Map.Entry e : resendQueue.entrySet()) {
                         System.out.println(e.getKey());
                         System.out.println(e.getValue().toString());
                         System.out.println("|");
                     }
-                    System.out.println("resendqueue end");
+                    System.out.println("resendqueue end");*/
                     if (senderPacketInfo2 != null) {
                         //check if already released, if so do not increase lamport clock TODO
-                        System.out.println("now have released1: " + senderPacketInfo2.getReleasedCount);
+                        //System.out.println("now have released1: " + senderPacketInfo2.getReleasedCount);
                         if (!senderPacketInfo2.isGotRleasedFrom(headMsg.name)) {
                             currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
                             senderPacketInfo2.getReleasedFrom(headMsg.name);
@@ -169,7 +168,7 @@ public class IncomingMessageHandleThread extends Thread {
 
                                 if (senderPacketInfo2.packet.type == MPacket.ACTION) {
                                     MPacket event = senderPacketInfo2.packet;
-                                    System.out.println("adding to confirmation queue: " + event.toString());
+                                    //System.out.println("adding to confirmation queue: " + event.toString());
                                     MPacket toConfirm = new MPacket(event.name, MPacket.CONFIRMATION, event.event
                                             /*no need to know event*/, currentTimeStamp.incrementAndGet());
                                     toConfirm.toConfrimSequenceNumber = event.sequenceNumber; //itself's sequence number will be determine by the confirmation thread
@@ -256,6 +255,7 @@ class ReceivedThread extends Thread {
             if (peek == null) {
                 continue;
             }
+            System.out.println("received queue head : " + peek.Packet.toString() + " isreleased " +  peek.isReleased);
             if (!peek.isReleased) {
                 //if not released yet we need to release it when it's head and send back release message
                 MPacket reply = new MPacket(0, 0);
@@ -266,7 +266,7 @@ class ReceivedThread extends Thread {
                 reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
                 MSocket mSocket = neighbourSockets.get(peek.Packet.name);
                 mSocket.writeObject(reply);
-                System.out.println("sending release");
+                System.out.println("sending release at head!!!!!" + reply.toString() + " reply to " + peek.Packet.toString());
                 peek.isReleased = true;
             }
             if (peek.isConfirmed) {
