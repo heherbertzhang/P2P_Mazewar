@@ -255,7 +255,7 @@ class ReceivedThread extends Thread {
             if (peek == null) {
                 continue;
             }
-            System.out.println("received queue head : " + peek.Packet.toString() + " isreleased " +  peek.isReleased);
+
             if (!peek.isReleased) {
                 //if not released yet we need to release it when it's head and send back release message
                 MPacket reply = new MPacket(0, 0);
@@ -268,6 +268,7 @@ class ReceivedThread extends Thread {
                 mSocket.writeObject(reply);
                 System.out.println("sending release at head!!!!!" + reply.toString() + " reply to " + peek.Packet.toString());
                 peek.isReleased = true;
+                System.out.println("received queue head : " + peek.Packet.toString() + " isreleased " +  peek.isReleased);
             }
             if (peek.isConfirmed) {
                 //confrimed so we can remove the msg
