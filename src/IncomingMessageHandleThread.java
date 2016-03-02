@@ -68,6 +68,7 @@ public class IncomingMessageHandleThread extends Thread {
                             assert (1 == 0);
                         }
                         System.out.println("added to received queue directly: " + headMsg.toString());
+                        currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update timestamp
                         continue;//change  to continue
                     }
                     MPacket replyMsg = new MPacket(0, 0);
@@ -110,7 +111,7 @@ public class IncomingMessageHandleThread extends Thread {
                     //System.out.println("sending ack back:" + replyMsg.toString());
                     //add to the received queue
                     if (!isDuplicated) {
-
+                        currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update timestamp
                         System.out.println("not duplicated action msg:" + headMsg.toString());
                         //no repeatence so that we can add to the queue
                         PacketInfo packetInfo = new PacketInfo(headMsg);
@@ -166,15 +167,16 @@ public class IncomingMessageHandleThread extends Thread {
                     break;
                 case MPacket.RELEASED:
                     //send back ack
+
                     sendBackAck(headMsg, MPacket.RECEIVED);
 
                     SenderPacketInfo senderPacketInfo2 = resendQueue.get(headMsg.toAckNumber);
 
                     if (senderPacketInfo2 != null) {
-                        //check if already released, if so do not increase lamport clock TODO
+                        //check if already released, if so do not increase lamport clock TODO!!!!? shoule we????
                         //System.out.println("now have released1: " + senderPacketInfo2.getReleasedCount);
                         if (!senderPacketInfo2.isGotRleasedFrom(headMsg.name)) {
-                            currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
+                            //currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
                             senderPacketInfo2.getReleasedFrom(headMsg.name);
                             System.out.println("now have released: " + senderPacketInfo2.getReleasedCount);
                             if (senderPacketInfo2.getReleasedCount == numOfPlayer.get()) {
@@ -207,6 +209,9 @@ public class IncomingMessageHandleThread extends Thread {
                         break;
                     }
                     //send back ack first always!!!!!!
+
+                    // TODO: 2016-03-02 cinfirmation does not need to compare time so no need lamport clock!? or it broadcast so need?
+                    //currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
                     sendBackAck(headMsg, MPacket.RECEIVED);
 
                     if (!avoidRepeatenceHelper.checkRepeatenceForProcess(headMsg.name, headMsg.sequenceNumber)) {
@@ -230,7 +235,7 @@ public class IncomingMessageHandleThread extends Thread {
         if (type == MPacket.RELEASED) {
             replymsg.sequenceNumber = curSequenceNum.incrementAndGet();
         }
-        currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
+        //currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
         replymsg.timestamp = currentTimeStamp.incrementAndGet();
         socket.writeObject(replymsg);
         System.out.println("reply to release:" + replymsg.toString());
@@ -289,6 +294,7 @@ class ReceivedThread extends Thread {
                 //if not released yet we need to release it when it's head and send back release message
                 if(peek.Packet.name.equals(selfName)){
                     //send release to itself: !!!!!!!
+
                     SenderPacketInfo senderPacketInfo = (SenderPacketInfo) resendQueue.get(peek.Packet.sequenceNumber);
                     senderPacketInfo.getReleasedFrom(selfName);
                 }
@@ -297,7 +303,6 @@ class ReceivedThread extends Thread {
                     reply.name = selfName;
                     reply.toAckNumber = peek.Packet.sequenceNumber;
                     reply.sequenceNumber = curSequenceNum.incrementAndGet();
-                    reply.timestamp = currentTimeStamp.incrementAndGet();
                     reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
 
                     MSocket mSocket = neighbourSockets.get(peek.Packet.name);
