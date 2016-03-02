@@ -37,7 +37,7 @@ public class IncomingMessageHandleThread extends Thread {
     }
 
     public void run() {
-        if (Debug.debug) System.out.println("Starting incoming queue handle thread");
+        if (Debug.debug) System.out.println("Starting incoming queue handle thread :" + Thread.currentThread().getId());
         //start other threads
         //new ReceivedThread(receivedQueue, displayQueue, currentTimeStamp, neighbousSockets).start();
         //new DisplayThread(displayQueue, clientTable).start();
@@ -168,8 +168,9 @@ public class IncomingMessageHandleThread extends Thread {
                     break;
                 case MPacket.RELEASED:
                     //send back ack
-
-                    sendBackAck(headMsg, MPacket.RECEIVED);
+                    if(!headMsg.name.equals(selfName)) {
+                        sendBackAck(headMsg, MPacket.RECEIVED);
+                    }
 
                     SenderPacketInfo senderPacketInfo2 = resendQueue.get(headMsg.toAckNumber);
 
@@ -180,21 +181,23 @@ public class IncomingMessageHandleThread extends Thread {
                             //currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
                             senderPacketInfo2.getReleasedFrom(headMsg.name);
                             System.out.println("now have released: " + senderPacketInfo2.getReleasedCount);
-                            if (senderPacketInfo2.getReleasedCount == numOfPlayer.get()) {
+                            synchronized (senderPacketInfo2) {
+                                if (senderPacketInfo2.getReleasedCount == numOfPlayer.get()) {
 
-                                synchronized (resendQueue) {
-                                    //remove from the resendqueue
-                                    resendQueue.remove(headMsg.toAckNumber);
-                                }
+                                    synchronized (resendQueue) {
+                                        //remove from the resendqueue
+                                        resendQueue.remove(headMsg.toAckNumber);
+                                    }
 
-                                //if (senderPacketInfo2.packet.type == MPacket.ACTION) {
-                                MPacket event = senderPacketInfo2.packet;
-                                //System.out.println("adding to confirmation queue: " + event.toString());
-                                MPacket toConfirm = new MPacket(event.name, MPacket.CONFIRMATION, event.event
+                                    //if (senderPacketInfo2.packet.type == MPacket.ACTION) {
+                                    MPacket event = senderPacketInfo2.packet;
+                                    //System.out.println("adding to confirmation queue: " + event.toString());
+                                    MPacket toConfirm = new MPacket(event.name, MPacket.CONFIRMATION, event.event
                                             /*no need to know event*/, currentTimeStamp.incrementAndGet());
-                                toConfirm.toConfrimSequenceNumber = event.sequenceNumber; //itself's sequence number will be determine by the confirmation thread
-                                confirmationQueue.add(toConfirm);
-                                //}
+                                    toConfirm.toConfrimSequenceNumber = event.sequenceNumber; //itself's sequence number will be determine by the confirmation thread
+                                    confirmationQueue.add(toConfirm);
+                                    //}
+                                }
                             }
                         }
 
@@ -265,9 +268,11 @@ class ReceivedThread extends Thread {
     String selfName;
     AtomicInteger curSequenceNum = null;
     Map resendQueue;
+    AtomicInteger numOfPlayers = null;
+    Queue incomingQueue= null;
 
-    public ReceivedThread(Queue receivedQueue, Queue<MPacket> displayQueue, Map resendQueue, AtomicInteger curTimeStamp, Map<String, MSocket> neighbourSockets, List<String> localPlayers,
-                          AtomicInteger actionHoldingCount, String selfName, AtomicInteger curSequenceNum) {
+    public ReceivedThread(Queue receivedQueue, Queue<MPacket> displayQueue, Map resendQueue, Queue incomingQueue, AtomicInteger curTimeStamp, Map<String, MSocket> neighbourSockets, List<String> localPlayers,
+                          AtomicInteger actionHoldingCount, String selfName, AtomicInteger curSequenceNum, AtomicInteger numOfPlayers) {
         this.receivedQueue = (BlockingQueue) receivedQueue;
         this.displayQueue = displayQueue;
         this.currentTimeStamp = curTimeStamp;
@@ -277,13 +282,15 @@ class ReceivedThread extends Thread {
         this.selfName = selfName;
         this.curSequenceNum = curSequenceNum;
         this.resendQueue = resendQueue;
+        this.numOfPlayers = numOfPlayers;
+        this.incomingQueue = incomingQueue;
     }
 
     @Override
     public void run() {
         //get the head of received queue and check whether it is released or not
         //if it is released then don't do anything otherwise send back release message
-        if (Debug.debug) System.out.println("Starting received queue thread");
+        if (Debug.debug) System.out.println("Starting received queue thread: "  + Thread.currentThread().getId());
         while (true) {
             PacketInfo peek = (PacketInfo) receivedQueue.peek();
             if (peek == null) {
@@ -292,11 +299,34 @@ class ReceivedThread extends Thread {
 
             if (!peek.isReleased) {
                 //if not released yet we need to release it when it's head and send back release message
+
                 if(peek.Packet.name.equals(selfName)){
                     //send release to itself: !!!!!!!
 
+                    MPacket reply = new MPacket(MPacket.RELEASED, 0);
+                    reply.name = selfName;
+                    reply.toAckNumber = peek.Packet.sequenceNumber;
+                    reply.sequenceNumber = curSequenceNum.incrementAndGet();
+
+                    incomingQueue.add(reply);
+                    peek.isReleased = true;
+                    /*
                     SenderPacketInfo senderPacketInfo = (SenderPacketInfo) resendQueue.get(peek.Packet.sequenceNumber);
-                    senderPacketInfo.getReleasedFrom(selfName);
+                    if(senderPacketInfo != null) {
+
+                        senderPacketInfo.getReleasedFrom(selfName);
+                        System.out.println("r thread now have released:" + senderPacketInfo.getReleasedCount);
+                        synchronized (senderPacketInfo) {
+                            if (senderPacketInfo.getReleasedCount == numOfPlayers.get()) {
+
+                                synchronized (resendQueue) {
+                                    //remove from the resendqueue
+                                    resendQueue.remove(peek.Packet.toAckNumber);
+                                }
+                            }
+
+                        }
+                    }*/
                 }
                 else {
                     MPacket reply = new MPacket(0, 0);
@@ -328,7 +358,7 @@ class ReceivedThread extends Thread {
                     }
                 }
             }
-            else if (peek.isConfirmed) {
+            if (peek.isConfirmed) {
                 //confrimed so we can remove the msg
                 //remove and add to display queue
                 PacketInfo removed = (PacketInfo) receivedQueue.poll();
@@ -356,7 +386,7 @@ class DisplayThread extends Thread {
     }
 
     public void run() {
-        if (Debug.debug) System.out.println("Starting display queue thread");
+        if (Debug.debug) System.out.println("Starting display queue thread: "  + Thread.currentThread().getId());
         Client client = null;
 
         while (true) {

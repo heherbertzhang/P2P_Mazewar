@@ -17,6 +17,7 @@ public class ResendThread extends Thread {
 
     @Override
     public void run() {
+        System.out.println("starting resend thread: " + Thread.currentThread().getId());
         while(true){
             synchronized (waitToResendQueue) {
                 for (Map.Entry<Integer, SenderPacketInfo> e : waitToResendQueue.entrySet()) {

@@ -26,7 +26,7 @@ public class ConfirmationBroadcast  extends Thread {
 
     @Override
     public void run() {
-
+        System.out.println("starting confirmation broadcast thread: "  + Thread.currentThread().getId());
         try{
             while (true){
                 MPacket toClient = (MPacket) confirmation.take();//// TODO: 2016-02-29 why so many confirmation to take?

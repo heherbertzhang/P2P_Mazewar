@@ -24,7 +24,7 @@ public class ClientSenderThread implements Runnable {
 
     public void run() {
 
-        if (Debug.debug) System.out.println("Starting ClientSenderThread");
+        if (Debug.debug) System.out.println("Starting ClientSenderThread: "  + Thread.currentThread().getId());
 
 
         while (true) {

@@ -4,17 +4,14 @@ import java.util.*;
 public class MPacket implements Serializable {
 
     /*The following are the type of events*/
-    public static final int HELLO = 100;
+
     public static final int ACTION = 200;
 	public static final int RECEIVED = 300;
 	public static final int RELEASED = 400;
 	public static final int CONFIRMATION = 500;
     /*The following are the specific action 
     for each type*/
-    /*Initial Hello*/
-    public static final int HELLO_INIT = 101;
-    /*Response to Hello*/
-    public static final int HELLO_RESP = 102;
+
 
     /*Action*/
     public static final int UP = 201;
@@ -39,9 +36,6 @@ public class MPacket implements Serializable {
     public int toConfrimSequenceNumber;
 
     //These are used to initialize the board
-    public int mazeSeed;
-    public int mazeHeight;
-    public int mazeWidth; 
     public Player[] players;
 
     //projectile
@@ -128,9 +122,9 @@ public class MPacket implements Serializable {
                 break;        
         }
         //MPACKET(NAME: name, <typestr: eventStr>, SEQNUM: sequenceNumber)
-        String toAck = toAckNumber+"";
-        String retString = String.format("MPACKET(NAME: %s, <%s: %s>, SEQNUM: %s, ACK: %s, toConfirm: %d)", name,
-            typeStr, eventStr, sequenceNumber, toAck, toConfrimSequenceNumber);
+
+        String retString = String.format("MPACKET(NAME: %s, <%s: %s>, SEQNUM: %s, ACK: %d, toConfirm: %d)", name,
+            typeStr, eventStr, sequenceNumber, toAckNumber, toConfrimSequenceNumber);
 
         return retString;
     }

@@ -121,6 +121,10 @@ public class MSocket{
 
                 Object incoming = in.readObject();
                 while(incoming != null){
+                    if (incoming instanceof String) {
+                        System.out.println("string!!!!!!: " + incoming);
+                        assert false : "string in msocket !!!!?";
+                    }
                     MPacket in_packet = (MPacket)incoming;
                     PairKey<String, Integer> pk = new PairKey<String, Integer>(in_packet.name, in_packet.sequenceNumber);
                     if (in_packet.type == 200 && !rcvdEvent.containsKey(pk)) {
