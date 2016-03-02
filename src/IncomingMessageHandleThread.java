@@ -62,8 +62,8 @@ public class IncomingMessageHandleThread extends Thread {
                         System.out.println("self action");
                         PacketInfo packetInfo = new PacketInfo(headMsg);
                         packetInfo.isAck = true;
-
-                        packetInfo.isReleased = true;
+                        packetInfo.isReleased = false;//cannot release yet!!!!!!!! must be head of received queue to release
+                        //thats why we do not need fifo!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         if (!receivedQueue.offer(packetInfo)) {
                             assert (1 == 0);
                         }
@@ -177,7 +177,7 @@ public class IncomingMessageHandleThread extends Thread {
                             currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
                             senderPacketInfo2.getReleasedFrom(headMsg.name);
                             System.out.println("now have released: " + senderPacketInfo2.getReleasedCount);
-                            if (senderPacketInfo2.getReleasedCount == numOfPlayer.get() - 1) {
+                            if (senderPacketInfo2.getReleasedCount == numOfPlayer.get()) {
 
                                 synchronized (resendQueue) {
                                     //remove from the resendqueue
@@ -287,30 +287,40 @@ class ReceivedThread extends Thread {
 
             if (!peek.isReleased) {
                 //if not released yet we need to release it when it's head and send back release message
-                MPacket reply = new MPacket(0, 0);
-                reply.name = selfName;
-                reply.toAckNumber = peek.Packet.sequenceNumber;
-                reply.sequenceNumber = curSequenceNum.incrementAndGet();
-                reply.timestamp = currentTimeStamp.incrementAndGet();
-                reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
-                MSocket mSocket = neighbourSockets.get(peek.Packet.name);
-                mSocket.writeObject(reply);
-                System.out.println("sending release at head!!!!!" + reply.toString() + " reply to " + peek.Packet.toString());
-                peek.isReleased = true;
-                System.out.println("received queue head : " + peek.Packet.toString() + " isreleased " + peek.isReleased);
+                if(peek.Packet.name.equals(selfName)){
+                    //send release to itself: !!!!!!!
+                    SenderPacketInfo senderPacketInfo = (SenderPacketInfo) resendQueue.get(peek.Packet.sequenceNumber);
+                    senderPacketInfo.getReleasedFrom(selfName);
+                }
+                else {
+                    MPacket reply = new MPacket(0, 0);
+                    reply.name = selfName;
+                    reply.toAckNumber = peek.Packet.sequenceNumber;
+                    reply.sequenceNumber = curSequenceNum.incrementAndGet();
+                    reply.timestamp = currentTimeStamp.incrementAndGet();
+                    reply.type = MPacket.RELEASED;//since remove the confirmation directly after received all
 
-                //add to resend queue for future use
-                reply.sequenceNumber = curSequenceNum.incrementAndGet();
-                //Initlize the List for ack
-                Hashtable<String, Boolean> All_neighbour = new Hashtable<String, Boolean>();
+                    MSocket mSocket = neighbourSockets.get(peek.Packet.name);
+                    mSocket.writeObject(reply);
+                    System.out.println("sending release at head!!!!!" + reply.toString() + " reply to " + peek.Packet.toString());
 
-                All_neighbour.put(peek.Packet.name, false);
 
-                // Initlize time
-                long physicalTime = System.currentTimeMillis();
-                SenderPacketInfo info = new SenderPacketInfo(All_neighbour, physicalTime, reply);
-                synchronized (resendQueue) {
-                    resendQueue.put(reply.sequenceNumber, info);//put to wait to resend queue
+                    peek.isReleased = true;
+                    System.out.println("received queue head : " + peek.Packet.toString() + " isreleased " + peek.isReleased);
+
+                    //add to resend queue for future use
+                    reply.sequenceNumber = curSequenceNum.incrementAndGet();
+                    //Initlize the List for ack
+                    Hashtable<String, Boolean> All_neighbour = new Hashtable<String, Boolean>();
+
+                    All_neighbour.put(peek.Packet.name, false);
+
+                    // Initlize time
+                    long physicalTime = System.currentTimeMillis();
+                    SenderPacketInfo info = new SenderPacketInfo(All_neighbour, physicalTime, reply);
+                    synchronized (resendQueue) {
+                        resendQueue.put(reply.sequenceNumber, info);//put to wait to resend queue
+                    }
                 }
             }
             else if (peek.isConfirmed) {
