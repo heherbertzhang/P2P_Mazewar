@@ -89,25 +89,16 @@ public class IncomingMessageHandleThread extends Thread {
                             replyMsg.type = MPacket.RECEIVED;
                         }
                     } else {
-                        //duplicate message need to check for the head of the queue to determine to resend ack or released msg
+                        //duplicate message need to check for the head of the queue to determine to resend ack
                         //find the message first
-                        PacketInfo receivedHeadPacketInfo = null;
-                        while (receivedHeadPacketInfo == null) {
-                            receivedHeadPacketInfo = (PacketInfo) receivedQueue.peek();
-                            if (receivedHeadPacketInfo == null) {
-                                System.out.println("something wrong since the received queue is null at this point");
-                            }
-                        }
-                        if (receivedHeadPacketInfo.Packet.sequenceNumber == headMsg.sequenceNumber) {
-                            replyMsg.type = MPacket.RELEASED;
-                        } else {
-                            replyMsg.type = MPacket.RECEIVED;
-                        }
-                        //TODO: the following is more accurate method to check but may take more time?
+                        //no need to release now since release must be received ensure by ack now
+
+                        replyMsg.type = MPacket.RECEIVED;
+                        //TODO: the following is more accurate method to check but may take more time and less internet trafffic?
                         /*for(Object receivedHeadPacketInfo : receivedQueue){
                             if(((PacketInfo) receivedHeadPacketInfo).Packet.sequenceNumber == headMsg.sequenceNumber){
                                 if(((PacketInfo) receivedHeadPacketInfo).isReleased){
-
+                                    continue;
                                 }
                             }
                         }*/
@@ -322,7 +313,7 @@ class ReceivedThread extends Thread {
                     resendQueue.put(reply.sequenceNumber, info);//put to wait to resend queue
                 }
             }
-            if (peek.isConfirmed) {
+            else if (peek.isConfirmed) {
                 //confrimed so we can remove the msg
                 //remove and add to display queue
                 PacketInfo removed = (PacketInfo) receivedQueue.poll();
