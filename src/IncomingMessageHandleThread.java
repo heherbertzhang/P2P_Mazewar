@@ -68,7 +68,8 @@ public class IncomingMessageHandleThread extends Thread {
                             assert (1 == 0);
                         }
                         System.out.println("added to received queue directly: " + headMsg.toString());
-                        currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update timestamp
+                        //currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update timestamp
+                        //do not increase lamport clock as in lecture slides
                         continue;//change  to continue
                     }
                     MPacket replyMsg = new MPacket(0, 0);
@@ -235,7 +236,6 @@ public class IncomingMessageHandleThread extends Thread {
         if (type == MPacket.RELEASED) {
             replymsg.sequenceNumber = curSequenceNum.incrementAndGet();
         }
-        //currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
         replymsg.timestamp = currentTimeStamp.incrementAndGet();
         socket.writeObject(replymsg);
         System.out.println("reply to release:" + replymsg.toString());
