@@ -495,6 +495,7 @@ class NamingServerListenerThread extends Thread {
                     System.out.println("test result: " +  result.toString());
                     System.out.println("mazewarclient: " + mazewarClient==null);
                     System.out.println("quit player is :" + result.quitPlayer);
+                    System.out.println("Client table is" +  mazewarClient.clientTable.toString());
                     System.out.println("quit clients is:" + quitClient.toString());
                     quitClient.unregisterMaze();
                     System.out.println("Unregister Maze of player!" + result.quitPlayer);
