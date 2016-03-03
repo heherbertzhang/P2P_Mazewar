@@ -226,7 +226,7 @@ public class Mazewar extends JFrame {
         catch (IOException e) {
             e.printStackTrace();
         }
-        System.exit(0);
+        //System.exit(0);
     }
 
 
@@ -492,6 +492,8 @@ class NamingServerListenerThread extends Thread {
                     // this mean the client recieve itself remote clint's quitting message
                     mazewarClient.quit_player(result.quitPlayer);
                     Client quitClient = mazewarClient.clientTable.get(result.quitPlayer);
+                    System.out.println("test result: " +  result.toString());
+                    System.out.println("mazewarclient: " + mazewarClient==null);
                     quitClient.unregisterMaze();
                     System.out.println("Unregister Maze of player!" + result.quitPlayer);
                 }
