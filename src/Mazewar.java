@@ -489,6 +489,7 @@ class NamingServerListenerThread extends Thread {
                     mazewarClient.quit_player(result.quitPlayer);
                     Client quitClient = mazewarClient.clientTable.get(result.quitPlayer);
                     quitClient.unregisterMaze();
+                    System.out.println("add neighbour socket!" + result.quitPlayer);
                 }
 
                 else {
