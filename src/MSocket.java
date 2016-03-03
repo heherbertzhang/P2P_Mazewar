@@ -55,7 +55,7 @@ public class MSocket{
 
     //Number of milli seconds after this MSocket is created
     //that packets are transmitted without network errors
-    public final long ERROR_FREE_TRANSMISSION_PERIOD = 30000; //30 seconds
+    public final long ERROR_FREE_TRANSMISSION_PERIOD = 1000; //30 seconds
 
     //To disable all network errors set:
     //DELAY_WEIGHT = 0, DELAY_THRESHOLD = 0, UNORDER_FACTOR = 0, DROP_RATE = 0
