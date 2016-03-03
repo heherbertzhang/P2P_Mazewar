@@ -13,6 +13,7 @@ import java.util.*;
 public class NamingServer {
     static Map<String, IpLocation> mClientTable = new Hashtable<>();
     static Map<Socket, ObjectOutputStream> mSocketTable = new Hashtable<>();
+    static Map<String, Socket> nameSocketTable = new Hashtable<>();
     static List<Player> playerList = new LinkedList<>();
     static Random randomGen = new Random(Mazewar.mazeSeed);
 
@@ -28,7 +29,7 @@ public class NamingServer {
 
         while (listening){
             if (serverSocket != null) {
-                new NamingServerHandlingThread(serverSocket.accept(), mClientTable, mSocketTable).start();
+                new NamingServerHandlingThread(serverSocket.accept(), mClientTable, mSocketTable,nameSocketTable).start();
             }
         }
         serverSocket.close();
@@ -38,10 +39,12 @@ public class NamingServer {
         private Socket socket = null;
         Map clientMap = null;
         Map<Socket, ObjectOutputStream> socketTable;
-        public NamingServerHandlingThread(Socket socket, Map clientMap, Map<Socket, ObjectOutputStream> socketTable){
+        Map<String, Socket> nameSocketTable;
+        public NamingServerHandlingThread(Socket socket, Map clientMap, Map<Socket, ObjectOutputStream> socketTable,  Map<String, Socket> nameSocketTable){
             this.socket = socket;
             this.clientMap = clientMap;
             this.socketTable = socketTable;
+            this.nameSocketTable = nameSocketTable;
             System.out.println("new client accepted");
         }
 
@@ -55,38 +58,58 @@ public class NamingServer {
                 while(packet == null) {
                     packet = (IpPacket) fromClient.readObject();
                 }
-                String name = packet.hostName;
-                IpLocation Ip = packet.Ip;
 
-                //new client
-                Map newclientMap = new Hashtable<>();
-                newclientMap.put(name, Ip);
+                if (packet.isQuit == true) {
+                    // mean someone told server that it need to quit
+                    clientMap.remove(packet.quitPlayer);
+                    Socket quitClintSocket = nameSocketTable.get(packet.quitPlayer);
+                    socketTable.remove(quitClintSocket);
+                    nameSocketTable.remove(packet.quitPlayer);
 
-                //Get a random location for player
-                Point point =
-                        new Point(randomGen.nextInt(Mazewar.mazeWidth),
-                                randomGen.nextInt(Mazewar.mazeHeight));
-                //Start them all facing North
-                Player player = new Player(packet.hostName, point, Player.North);
-                List newPlayer= new LinkedList<>();
-                newPlayer.add(player);
-                //broadcast to all except this socket about this new player
-                System.out.println("st size : " + mSocketTable.size());
-                for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
-                    System.out.println("socket: "+ socket.toString());
-                    ObjectOutputStream oos  = entry.getValue();
-                    oos.writeObject(new IpBroadCastPacket(newclientMap, newPlayer));
+                    //broadcast to everyone
+                    for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
+                        //System.out.println("socket: " + socket.toString());
+                        ObjectOutputStream oos = entry.getValue();
+                        oos.writeObject(new IpBroadCastPacket(true,packet.quitPlayer));
+                    }
+
+
                 }
-                mSocketTable.put(socket, toClient);//add to broadcast list after broadcast
+                else {
+                    // mean join
+                    String name = packet.hostName;
+                    IpLocation Ip = packet.Ip;
 
-                //new client receive all other players' ip
-                playerList.add(player);
-                clientMap.put(name, Ip);//put new client before send all others since we need our self
-                System.out.println("cm size: "+ clientMap.size());
-                toClient.writeObject(new IpBroadCastPacket(clientMap, playerList));
+                    //new client
+                    Map newclientMap = new Hashtable<>();
+                    newclientMap.put(name, Ip);
+
+                    //Get a random location for player
+                    Point point =
+                            new Point(randomGen.nextInt(Mazewar.mazeWidth),
+                                    randomGen.nextInt(Mazewar.mazeHeight));
+                    //Start them all facing North
+                    Player player = new Player(packet.hostName, point, Player.North);
+                    List newPlayer = new LinkedList<>();
+                    newPlayer.add(player);
+                    //broadcast to all except this socket about this new player
+                    System.out.println("st size : " + mSocketTable.size());
+                    for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
+                        System.out.println("socket: " + socket.toString());
+                        ObjectOutputStream oos = entry.getValue();
+                        oos.writeObject(new IpBroadCastPacket(newclientMap, newPlayer));
+                    }
+                    mSocketTable.put(socket, toClient);//add to broadcast list after broadcast
+
+                    //new client receive all other players' ip
+                    playerList.add(player);
+                    clientMap.put(name, Ip);//put new client before send all others since we need our self
+                    nameSocketTable.put(name, socket);
+                    System.out.println("cm size: " + clientMap.size());
+                    toClient.writeObject(new IpBroadCastPacket(clientMap, playerList));
 
 
-
+                }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();

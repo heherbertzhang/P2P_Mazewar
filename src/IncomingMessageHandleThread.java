@@ -18,6 +18,7 @@ public class IncomingMessageHandleThread extends Thread {
     private AtomicInteger numOfPlayer = null;//has to be Atomic for dynamic change of the players
     private String selfName = null;
     private AtomicInteger curSequenceNum = null;
+    private Hashtable<String, Client> ClientTable = null;
 
     public IncomingMessageHandleThread(Queue<MPacket> incoming, Queue<PacketInfo> receivedQueue, Map<Integer, SenderPacketInfo> resendQueue,
                                        Queue<MPacket> confirmationQueue, AtomicInteger actionHoldingCount,

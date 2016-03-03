@@ -50,6 +50,9 @@ public abstract class LocalClient extends Client {
     public void addActionEvent(int action) throws InterruptedException {
         actionCount.incrementAndGet();
         MPacket packet = new MPacket(getName(), MPacket.ACTION, action);
+        if (action == MPacket.QUIT){
+            packet = new MPacket(getName(), MPacket.QUITMESSAGE, action);
+        }
         eventQueue.put(packet);
         System.out.println("GUI putting to event queue:" + packet);
     }

@@ -9,6 +9,7 @@ public class MPacket implements Serializable {
 	public static final int RECEIVED = 300;
 	public static final int RELEASED = 400;
 	public static final int CONFIRMATION = 500;
+    public static final int QUITMESSAGE = 600;
     /*The following are the specific action 
     for each type*/
 
@@ -21,6 +22,7 @@ public class MPacket implements Serializable {
     public static final int FIRE = 205;
     public static final int DIE = 206;
     public static final int MOVE_BULLET = 207;
+    public static final int QUIT = 208;
     
     
     //These fields characterize the event  
@@ -81,7 +83,9 @@ public class MPacket implements Serializable {
 				break;
 			case 500:
 				typeStr = "CONFIRMATION";
-				break;	
+				break;
+            case 600:
+                typeStr = "QUITMESSAGE";
             default:
                 typeStr = "ERROR";
                 break;        
@@ -114,6 +118,8 @@ public class MPacket implements Serializable {
             case 207:
                 eventStr = "MOVE_BULLET";
                 break;
+            case 208:
+                eventStr = "QUIT";
             case 0:
                 eventStr = "DEFAULT";
                 break;

@@ -43,6 +43,10 @@ public class ClientSenderThread implements Runnable {
                 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                 //mSocket.writeObject(toClient);
+                if (toClient.event == MPacket.QUIT)
+                {
+                    //send to Naming server to confirm
+                }
 
 
                 // first broadcast

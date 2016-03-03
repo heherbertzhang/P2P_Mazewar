@@ -49,8 +49,10 @@ public class GUIClient extends LocalClient implements KeyListener {
                 try{
                         // If the user pressed Q, invoke the cleanup code and quit. 
                         if((e.getKeyChar() == 'q') || (e.getKeyChar() == 'Q')) {
+                                // should not quit imediattly
+                                // Up-arrow moves forward.
                                 Mazewar.quit();
-                        // Up-arrow moves forward.
+
                         } else if(e.getKeyCode() == KeyEvent.VK_UP) {
                                 //forward();
                                 //System.out.println("up");

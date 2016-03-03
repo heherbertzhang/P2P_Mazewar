@@ -35,6 +35,8 @@ public class ResendThread extends Thread {
                             System.out.println("resending to client:" + k.getKey() + " and packet:" + e.getValue().packet.toString());
                         }
                     }
+
+
                 }
             }
         }

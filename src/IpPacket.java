@@ -12,14 +12,23 @@ public class IpPacket implements Serializable{
     public IpLocation Ip;
     public int statusCode;
     public Player player;
+    Boolean isQuit;
+    String quitPlayer;
+
+
 
     public IpPacket(String hostName, String host, int port){
         this.hostName = hostName;
         this.Ip = new IpLocation(host, port);
+        this.isQuit = false;
     }
 
     public IpPacket(int statusCode){
         this.statusCode = statusCode;
+    }
+    public IpPacket(Boolean isQuit, String quitPlayer){
+        this.isQuit = isQuit;
+        this.quitPlayer = quitPlayer;
     }
 }
 
@@ -35,8 +44,16 @@ class IpLocation implements Serializable{
 class IpBroadCastPacket implements Serializable{
     Map<String, IpLocation> mClientTable;
     List<Player> players;
+    Boolean isQuit;
+    String quitPlayer;
+
     public IpBroadCastPacket(Map cs, List players){
         this.mClientTable = cs;
         this.players = players; //need copy constructor?
+        this.isQuit = false;
+    }
+    public IpBroadCastPacket(Boolean isQuit, String quitPlayer){
+        this.isQuit = isQuit;
+        this.quitPlayer = quitPlayer;
     }
 }

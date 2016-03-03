@@ -63,6 +63,7 @@ class PacketINFOComparator implements Comparator<PacketInfo>{
 
 
 public class Mazewar extends JFrame {
+    public static ObjectOutputStream namingServerStream;
     private MServerSocket serverSocket;
 	private Queue<PacketInfo> receivedQueue;
 	private Queue<MPacket> displayQueue;
@@ -78,10 +79,22 @@ public class Mazewar extends JFrame {
     private BlockingQueue<MPacket> confirmationQueue;
     private AvoidRepeatence avoidRepeatenceHelper;
     private long timeout;
-    public String playerName;
+    public static String playerName;
     public AtomicBoolean  startRender;
 
+    public void quit_player(String name){
+        clientTable.remove(name);
+        neighbours.remove(name);
+        socketsForBroadcast.remove(name);
+        waitToResendQueue.clear();
+        /*
+        for (Map.Entry<Integer, SenderPacketInfo> e : waitToResendQueue.entrySet()) {
+            SenderPacketInfo waitingItem  = e.getValue();
+            waitingItem.ackFromAll.remove(name);
+            waitingItem.releasedReceicedMap.remove(name);
+        }*/
 
+    }
     public void addNeighbours(String name, IpLocation neighbours) {
         this.neighbours.put(name, neighbours);
     }
@@ -187,6 +200,8 @@ public class Mazewar extends JFrame {
         console.setText("");
     }
 
+
+
     /**
      * Static method for performing cleanup before exiting the game.
      */
@@ -194,8 +209,16 @@ public class Mazewar extends JFrame {
         // Put any network clean-up code you might have here.
         // (inform other implementations on the network that you have
         //  left, etc.)
-
-
+        try {
+            IpPacket QuitPackat = new IpPacket(true, playerName);
+            namingServerStream.writeObject(QuitPackat);
+        }
+        catch(UnknownHostException e){
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
         System.exit(0);
     }
 
@@ -297,6 +320,7 @@ public class Mazewar extends JFrame {
             Socket toNamingServerSocket = new Socket(namingServerHost, namingServerPort);
             ipPacket = new IpPacket(playerName, InetAddress.getLocalHost().getHostName(), selfPort);
             ObjectOutputStream toNamingServer = new ObjectOutputStream(toNamingServerSocket.getOutputStream());
+            this.namingServerStream = toNamingServer;
             toNamingServer.writeObject(ipPacket);
             new NamingServerListenerThread(toNamingServerSocket, this).start();
         } catch (UnknownHostException e) {
@@ -459,50 +483,58 @@ class NamingServerListenerThread extends Thread {
             ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
             while (true) {
                 IpBroadCastPacket result = (IpBroadCastPacket) objectInputStream.readObject();
-                Map<String, IpLocation> clientTable = result.mClientTable;
-                for (Map.Entry<String, IpLocation> e: clientTable.entrySet()){
-                    if(!e.getKey().equals(mazewarClient.playerName)) {
-                        mazewarClient.addNeighbours(e.getKey(), e.getValue());
-                        mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress, (e.getValue()).port));
-                        System.out.println("add neighbour socket!");
+
+                if (result.isQuit == true) {
+                    // this mean the client recieve itself remote clint's quitting message
+                    mazewarClient.quit_player(result.quitPlayer);
+                    Client quitClient = mazewarClient.clientTable.get(result.quitPlayer);
+                    quitClient.unregisterMaze();
+                }
+
+                else {
+                    //adding the client
+                    Map<String, IpLocation> clientTable = result.mClientTable;
+                    for (Map.Entry<String, IpLocation> e : clientTable.entrySet()) {
+                        if (!e.getKey().equals(mazewarClient.playerName)) {
+                            mazewarClient.addNeighbours(e.getKey(), e.getValue());
+                            mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress, (e.getValue()).port));
+                            System.out.println("add neighbour socket!");
+                        }
+                    }
+                    List<Player> players = result.players;
+
+                    //// TODO: 2016-02-28 how to dynamic add the player
+                    // Create the GUIClient and connect it to the KeyListener queue
+                    //RemoteClient remoteClient = null;
+                    for (Player player : players) {
+                        if (player.name.equals(mazewarClient.playerName)) {
+                            System.out.println("Adding guiClient: " + player.toString());
+                            //create new client for current player
+                            mazewarClient.guiClient = new GUIClient(mazewarClient.playerName, mazewarClient.eventQueue, mazewarClient.actionHoldingCount);
+
+                            //put for the local player list
+                            mazewarClient.localPlayers.add(mazewarClient.guiClient.getName());
+
+                            //register maze
+                            mazewarClient.maze.addClientAt(mazewarClient.guiClient, player.point, player.direction);
+                            mazewarClient.addKeyListener(mazewarClient.guiClient);
+                            mazewarClient.clientTable.put(player.name, mazewarClient.guiClient);
+
+                        } else {
+                            System.out.println("Adding remoteClient: " + player.toString());
+                            RemoteClient remoteClient = new RemoteClient(player.name);
+                            //register maze
+                            mazewarClient.maze.addClientAt(remoteClient, player.point, player.direction);
+                            mazewarClient.clientTable.put(player.name, remoteClient);
+                        }
+                    }
+
+
+                    if (mazewarClient.numberOfPlayers.get() == 2) {
+                        mazewarClient.startRender.set(true);//can start to display
+                        System.out.println("start to render");
                     }
                 }
-                List<Player> players = result.players;
-
-                //// TODO: 2016-02-28 how to dynamic add the player
-                // Create the GUIClient and connect it to the KeyListener queue
-                //RemoteClient remoteClient = null;
-                for (Player player : players) {
-                    if (player.name.equals(mazewarClient.playerName)) {
-                        System.out.println("Adding guiClient: " + player.toString());
-                        //create new client for current player
-                        mazewarClient.guiClient = new GUIClient(mazewarClient.playerName, mazewarClient.eventQueue, mazewarClient.actionHoldingCount);
-
-                        //put for the local player list
-                        mazewarClient.localPlayers.add(mazewarClient.guiClient.getName());
-
-                        //register maze
-                        mazewarClient.maze.addClientAt(mazewarClient.guiClient, player.point, player.direction);
-                        mazewarClient.addKeyListener(mazewarClient.guiClient);
-                        mazewarClient.clientTable.put(player.name, mazewarClient.guiClient);
-
-                    } else {
-                        System.out.println("Adding remoteClient: " + player.toString());
-                        RemoteClient remoteClient = new RemoteClient(player.name);
-                        //register maze
-                        mazewarClient.maze.addClientAt(remoteClient, player.point, player.direction);
-                        mazewarClient.clientTable.put(player.name, remoteClient);
-                    }
-                }
-
-
-
-
-                if(mazewarClient.numberOfPlayers.get() == 2){
-                    mazewarClient.startRender.set(true);//can start to display
-                    System.out.println("start to render");
-                }
-
             }
         } catch (IOException e) {
             e.printStackTrace();
