@@ -63,7 +63,6 @@ class PacketINFOComparator implements Comparator<PacketInfo>{
 
 
 public class Mazewar extends JFrame {
-    public static ObjectOutputStream namingServerStream;
     private MServerSocket serverSocket;
 	private Queue<PacketInfo> receivedQueue;
 	private Queue<MPacket> displayQueue;
@@ -81,6 +80,10 @@ public class Mazewar extends JFrame {
     private long timeout;
     public static String playerName;
     public AtomicBoolean  startRender;
+
+    static String namingServerHost;
+    static int namingServerPort;
+    static int selfPort;
 
     public void quit_player(String name){
         clientTable.remove(name);
@@ -211,7 +214,9 @@ public class Mazewar extends JFrame {
         //  left, etc.)
         try {
             IpPacket QuitPackat = new IpPacket(true, playerName);
-            namingServerStream.writeObject(QuitPackat);
+            Socket NamingServer = new Socket(namingServerHost,namingServerPort);
+            ObjectOutputStream toNS = new ObjectOutputStream(NamingServer.getOutputStream());
+            toNS.writeObject(QuitPackat);
         }
         catch(UnknownHostException e){
             e.printStackTrace();
@@ -222,9 +227,7 @@ public class Mazewar extends JFrame {
         System.exit(0);
     }
 
-    String namingServerHost;
-    int namingServerPort;
-    int selfPort;
+
     /**
      * The place where all the pieces are put together.
      */
@@ -320,7 +323,6 @@ public class Mazewar extends JFrame {
             Socket toNamingServerSocket = new Socket(namingServerHost, namingServerPort);
             ipPacket = new IpPacket(playerName, InetAddress.getLocalHost().getHostAddress(), selfPort);
             ObjectOutputStream toNamingServer = new ObjectOutputStream(toNamingServerSocket.getOutputStream());
-            this.namingServerStream = toNamingServer;
             toNamingServer.writeObject(ipPacket);
             new NamingServerListenerThread(toNamingServerSocket, this).start();
         } catch (UnknownHostException e) {
@@ -489,7 +491,7 @@ class NamingServerListenerThread extends Thread {
                     mazewarClient.quit_player(result.quitPlayer);
                     Client quitClient = mazewarClient.clientTable.get(result.quitPlayer);
                     quitClient.unregisterMaze();
-                    System.out.println("add neighbour socket!" + result.quitPlayer);
+                    System.out.println("Unregister Maze of player!" + result.quitPlayer);
                 }
 
                 else {

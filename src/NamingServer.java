@@ -60,6 +60,7 @@ public class NamingServer {
                 }
 
                 if (packet.isQuit == true) {
+
                     // mean someone told server that it need to quit
                     clientMap.remove(packet.quitPlayer);
                     Socket quitClintSocket = nameSocketTable.get(packet.quitPlayer);
