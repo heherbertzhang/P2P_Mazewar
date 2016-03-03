@@ -60,7 +60,7 @@ public class NamingServer {
                 }
 
                 if (packet.isQuit == true) {
-
+                    System.out.println("I received a quitting message");
                     // mean someone told server that it need to quit
                     clientMap.remove(packet.quitPlayer);
                     Socket quitClintSocket = nameSocketTable.get(packet.quitPlayer);
