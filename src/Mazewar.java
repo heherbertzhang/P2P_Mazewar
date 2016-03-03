@@ -213,9 +213,11 @@ public class Mazewar extends JFrame {
         // (inform other implementations on the network that you have
         //  left, etc.)
         try {
+
             IpPacket QuitPackat = new IpPacket(true, playerName);
             Socket NamingServer = new Socket(namingServerHost,namingServerPort);
             ObjectOutputStream toNS = new ObjectOutputStream(NamingServer.getOutputStream());
+            System.out.println("I am writting to the outputstream");
             toNS.writeObject(QuitPackat);
         }
         catch(UnknownHostException e){
