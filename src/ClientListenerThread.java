@@ -15,7 +15,7 @@ public class ClientListenerThread implements Runnable {
     }
 
     public void run() {
-        MPacket received = null;
+
 
         //run dequeue thread
         //new IncomingMessageHandleThread(incomingQueue, receivedQueue, displayQueue, actionHoldingCount, neighbours_socket, clientTable).start();
@@ -25,12 +25,18 @@ public class ClientListenerThread implements Runnable {
 
         try {
             while (true) {
-                while(received == null) {
-                    received = (MPacket) mSocket.readObject();
+
+                MPacket received = (MPacket) mSocket.readObject();
+
+                //System.out.println("listening: " + received.toString());
+                if(!incomingQueue.offer(received)){
+                    assert false;
                 }
-                System.out.println("listening: " + received.toString());
-                incomingQueue.add(received);
-                System.out.println("added to incoming queue");
+                /*
+                for(MPacket packet: incomingQueue){
+                    System.out.println("incomingqueue:" + packet.toString());
+                }*/
+                //System.out.println("added to incoming queue");
             }
         } catch (IOException e) {
             Thread.currentThread().interrupt();
@@ -44,7 +50,7 @@ public class ClientListenerThread implements Runnable {
 
 
 /*
-class PacketComparator implements Comparator<MPacket>{
+class PacketINFOComparator implements Comparator<MPacket>{
     @Override
     public int compare(MPacket x, MPacket y){
         if(x.sequenceNumber < y.sequenceNumber){

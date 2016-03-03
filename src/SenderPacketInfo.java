@@ -7,16 +7,14 @@ import java.util.Map;
 public class SenderPacketInfo {
     public MPacket packet;
     public Map<String, Boolean> ackFromAll;
-    public int sequence_Number;
-    public float time;
     public int getReleasedCount;
     public Map<String, Boolean> releasedReceicedMap;
-    public SenderPacketInfo(Map<String, Boolean> All_neighbour, int sequence_Number, long time, MPacket packet){
-        this.sequence_Number = sequence_Number;
+    public long physicalTime;
+    public SenderPacketInfo(Map<String, Boolean> All_neighbour, long physicalTime, MPacket packet){
         this.ackFromAll = All_neighbour;
-        this.time = time;
         this.packet = packet;
         this.getReleasedCount = 0;
+        this.physicalTime = physicalTime;
         this.releasedReceicedMap = new Hashtable<>(All_neighbour.size());
     }
     public boolean isAckedFrom(String name){
@@ -26,9 +24,11 @@ public class SenderPacketInfo {
         ackFromAll.remove(name);
     }
     public void getReleasedFrom(String name){
+
         ackFromAll.remove(name);
-        releasedReceicedMap.put(name, true);
-        getReleasedCount += 1;
+        if(releasedReceicedMap.put(name, true)== null) {
+            getReleasedCount += 1;
+        }
     }
 
     public boolean isGotRleasedFrom(String name){

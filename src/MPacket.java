@@ -4,17 +4,14 @@ import java.util.*;
 public class MPacket implements Serializable {
 
     /*The following are the type of events*/
-    public static final int HELLO = 100;
+
     public static final int ACTION = 200;
 	public static final int RECEIVED = 300;
 	public static final int RELEASED = 400;
 	public static final int CONFIRMATION = 500;
     /*The following are the specific action 
     for each type*/
-    /*Initial Hello*/
-    public static final int HELLO_INIT = 101;
-    /*Response to Hello*/
-    public static final int HELLO_RESP = 102;
+
 
     /*Action*/
     public static final int UP = 201;
@@ -35,12 +32,10 @@ public class MPacket implements Serializable {
     
     //The sequence number of the event
     public int sequenceNumber;
+    public int toAckNumber;
     public int toConfrimSequenceNumber;
 
     //These are used to initialize the board
-    public int mazeSeed;
-    public int mazeHeight;
-    public int mazeWidth; 
     public Player[] players;
 
     //projectile
@@ -119,13 +114,18 @@ public class MPacket implements Serializable {
             case 207:
                 eventStr = "MOVE_BULLET";
                 break;
+            case 0:
+                eventStr = "DEFAULT";
+                break;
             default:
                 eventStr = "ERROR";
                 break;        
         }
         //MPACKET(NAME: name, <typestr: eventStr>, SEQNUM: sequenceNumber)
-        String retString = String.format("MPACKET(NAME: %s, <%s: %s>, SEQNUM: %s)", name, 
-            typeStr, eventStr, sequenceNumber);
+
+        String retString = String.format("MPACKET(NAME: %s, <%s: %s>, SEQNUM: %s, ACK: %d, toConfirm: %d)", name,
+            typeStr, eventStr, sequenceNumber, toAckNumber, toConfrimSequenceNumber);
+
         return retString;
     }
 
