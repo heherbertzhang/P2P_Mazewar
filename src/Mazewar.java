@@ -318,7 +318,7 @@ public class Mazewar extends JFrame {
         IpPacket ipPacket = null;
         try {
             Socket toNamingServerSocket = new Socket(namingServerHost, namingServerPort);
-            ipPacket = new IpPacket(playerName, InetAddress.getLocalHost().getHostName(), selfPort);
+            ipPacket = new IpPacket(playerName, InetAddress.getLocalHost().getHostAddress(), selfPort);
             ObjectOutputStream toNamingServer = new ObjectOutputStream(toNamingServerSocket.getOutputStream());
             this.namingServerStream = toNamingServer;
             toNamingServer.writeObject(ipPacket);
