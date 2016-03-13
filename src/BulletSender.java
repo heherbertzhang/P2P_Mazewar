@@ -16,7 +16,10 @@ public class BulletSender extends Thread {
     }
 
     static public void sendNewBullet(){
-        bulletMoveCount.set(12);
+        bulletMoveCount.set(8);
+    }
+    static public void stopBullet(){
+        bulletMoveCount.set(0);
     }
 
 

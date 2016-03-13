@@ -389,14 +389,15 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
                 //Collection deadPrj = new HashSet();
                 while(true) {
                         if(!projectileMap.isEmpty()) {
-                                Iterator<Projectile> it = projectileMap.keySet().iterator();
+                                /*Iterator<Projectile> it = projectileMap.keySet().iterator();
                                 synchronized(projectileMap) {
-                                        /*while(it.hasNext()) {
+                                        while(it.hasNext()) {
                                                 Object o = it.next();
                                                 assert(o instanceof Projectile);
-                                                sendProjectileSignal((Projectile) o);
+                                                //sendProjectileSignal((Projectile) o);
                                                 //deadPrj.addAll(moveProjectile((Projectile)o));
                                         }*/
+
                                         /*it = deadPrj.iterator();
                                         while(it.hasNext()) {
                                                 Object o = it.next();
@@ -407,7 +408,10 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
                                         }
                                         deadPrj.clear();*/
 
-                                }
+
+                        }
+                        else {
+                                BulletSender.stopBullet();
                         }
                         try {
                                 thread.sleep(200);
