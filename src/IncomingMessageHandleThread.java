@@ -18,11 +18,13 @@ public class IncomingMessageHandleThread extends Thread {
     private AtomicInteger numOfPlayer = null;//has to be Atomic for dynamic change of the players
     private String selfName = null;
     private AtomicInteger curSequenceNum = null;
+    private Mazewar mazewarAgent = null;
 
     public IncomingMessageHandleThread(Queue<MPacket> incoming, Queue<PacketInfo> receivedQueue, Map<Integer, SenderPacketInfo> resendQueue,
                                        Queue<MPacket> confirmationQueue, AtomicInteger actionHoldingCount,
                                        Map<String, MSocket> neighbours_socket, AtomicInteger currentTimeStamp,
-                                       AvoidRepeatence avoidRepeatence, AtomicInteger numOfPlayer, String selfName, AtomicInteger sequenceNumber) {
+                                       AvoidRepeatence avoidRepeatence, AtomicInteger numOfPlayer, String selfName, AtomicInteger sequenceNumber,
+                                       Mazewar mazewarAgent) {
         this.receivedQueue = (PriorityBlockingQueue) receivedQueue;
         this.neighbousSockets = neighbours_socket;
         this.actionHoldingCount = actionHoldingCount;
@@ -34,6 +36,7 @@ public class IncomingMessageHandleThread extends Thread {
         this.numOfPlayer = numOfPlayer;
         this.selfName = selfName;
         this.curSequenceNum = sequenceNumber;
+        this.mazewarAgent = mazewarAgent;
     }
 
     public void run() {
@@ -150,21 +153,27 @@ public class IncomingMessageHandleThread extends Thread {
                             //since release message only send to one we can safely remove it
                             synchronized (resendQueue) {
                                 resendQueue.remove(headMsg.toAckNumber);
-                                System.out.println("!!!!!!!!!!!!!!!!!remove release");
+                                //System.out.println("!!!!!!!!!!!!!!!!!remove release");
                             }
                         }
                         //check if already acked, do not increase lamport clock TODO
-                        else if (!senderPacketInfo.isAckedFrom(headMsg.name)) {
+                        else if (!senderPacketInfo.isAckedFrom(headMsg.name)) { //ACTION and confirmation and quitmessage
                             currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
                             senderPacketInfo.acknowledgeReceivedFrom(headMsg.name);
                             if (senderPacketInfo.packet.type != MPacket.ACTION &&
                                     senderPacketInfo.ackFromAll.isEmpty()) {
+                                if (senderPacketInfo.packet.type == MPacket.QUITMESSAGE){
+                                    Mazewar.quit();
+                                }
                                 synchronized (resendQueue) {
                                     resendQueue.remove(headMsg.toAckNumber);
                                 }
                             }
                         }
                     }
+                    break;
+                case MPacket.QUITMESSAGE:
+                    sendBackAck(headMsg, MPacket.RECEIVED);
                     break;
                 case MPacket.RELEASED:
                     //send back ack
