@@ -1,3 +1,4 @@
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.*;
 
@@ -16,10 +17,6 @@ public class ClientListenerThread implements Runnable {
 
     public void run() {
 
-
-        //run dequeue thread
-        //new IncomingMessageHandleThread(incomingQueue, receivedQueue, displayQueue, actionHoldingCount, neighbours_socket, clientTable).start();
-
         if (Debug.debug) System.out.println("Starting ClientListenerThread");
 
 
@@ -32,33 +29,18 @@ public class ClientListenerThread implements Runnable {
                 if(!incomingQueue.offer(received)){
                     assert false;
                 }
-                /*
-                for(MPacket packet: incomingQueue){
-                    System.out.println("incomingqueue:" + packet.toString());
-                }*/
-                //System.out.println("added to incoming queue");
             }
         } catch (IOException e) {
             Thread.currentThread().interrupt();
         } catch (ClassNotFoundException e) {
+            System.out.println("debug:");
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
+        } catch (Exception e){
+            System.out.println("debug:");
             e.printStackTrace();
             Thread.currentThread().interrupt();
         }
 
     }
 }
-
-
-/*
-class PacketINFOComparator implements Comparator<MPacket>{
-    @Override
-    public int compare(MPacket x, MPacket y){
-        if(x.sequenceNumber < y.sequenceNumber){
-            return -1;
-        }
-        if(x.sequenceNumber > y.sequenceNumber){
-            return 1;
-        }
-        return 0;
-    }
-}*/
