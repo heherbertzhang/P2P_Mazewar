@@ -176,7 +176,9 @@ public abstract class Client implements Serializable {
 
                 if(maze.clientFire(this)) {
                         notifyFire();
-                        BulletSender.sendNewBullet();
+                        if(this instanceof LocalClient){
+                                BulletSender.sendNewBullet();
+                        }
                         return true;
                 } else {
                         return false;
