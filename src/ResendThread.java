@@ -22,10 +22,10 @@ public class ResendThread extends Thread {
             synchronized (waitToResendQueue) {
                 for (Map.Entry<Integer, SenderPacketInfo> e : waitToResendQueue.entrySet()) {
                     long currenttime = System.currentTimeMillis();
-                    if (currenttime - e.getValue().physicalTime > timeout) {
+                    if (currenttime - e.getValue().physicalTime > (timeout*e.getValue().resendtime)) {
                         // means timeout
                         // resend the messages to all the clients who didn't give me respond
-
+                        e.getValue().resendtime = e.getValue().resendtime + 1;
                         Hashtable<String, Boolean> lostClients = (Hashtable<String, Boolean>) e.getValue().ackFromAll;
                         //update time
                         e.getValue().physicalTime = currenttime;

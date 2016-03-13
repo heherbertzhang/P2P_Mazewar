@@ -5,6 +5,7 @@ import java.util.Map;
  * Created by jiayuhe on 2016-02-27.
  */
 public class SenderPacketInfo {
+    public int resendtime;
     public MPacket packet;
     public Map<String, Boolean> ackFromAll;
     public int getReleasedCount;
@@ -16,6 +17,7 @@ public class SenderPacketInfo {
         this.getReleasedCount = 0;
         this.physicalTime = physicalTime;
         this.releasedReceicedMap = new Hashtable<>(All_neighbour.size());
+        this.resendtime = 1;
     }
     public boolean isAckedFrom(String name){
         return (ackFromAll.get(name) == null);
