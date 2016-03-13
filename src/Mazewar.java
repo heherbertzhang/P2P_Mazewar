@@ -87,6 +87,7 @@ public class Mazewar extends JFrame {
     static int selfPort;
 
     public void quit_player(String name){
+        numberOfPlayers.decrementAndGet();
         neighbours.remove(name);
         socketsForBroadcast.remove(name);
         waitToResendQueue.clear();
@@ -217,7 +218,6 @@ public class Mazewar extends JFrame {
         // (inform other implementations on the network that you have
         //  left, etc.)
         try {
-            numberOfPlayers.decrementAndGet();
             IpPacket QuitPackat = new IpPacket(true, playerName);
             Socket NamingServer = new Socket(namingServerHost,namingServerPort);
             ObjectOutputStream toNS = new ObjectOutputStream(NamingServer.getOutputStream());
