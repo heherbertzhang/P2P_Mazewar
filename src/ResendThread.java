@@ -9,7 +9,7 @@ public class ResendThread extends Thread {
     private long timeout;
     public Map<String, MSocket> neighbours_socket;
     public Hashtable<Integer,SenderPacketInfo> waitToResendQueue;
-    public ResendThread(long timeout, Hashtable<Integer,SenderPacketInfo> waitToResendQueue, Map<String, MSocket> neighbours_socket){
+    public ResendThread(long timeout, Map timeoutlist, Hashtable<Integer,SenderPacketInfo> waitToResendQueue, Map<String, MSocket> neighbours_socket){
         this.timeout = timeout;
         this.waitToResendQueue = waitToResendQueue;
         this.neighbours_socket = neighbours_socket;

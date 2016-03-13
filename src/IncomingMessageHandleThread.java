@@ -157,24 +157,20 @@ public class IncomingMessageHandleThread extends Thread {
                             }
                         }
                         //check if already acked, do not increase lamport clock TODO
-                        else if (!senderPacketInfo.isAckedFrom(headMsg.name)) { //ACTION and confirmation and quitmessage
+                        else if (!senderPacketInfo.isAckedFrom(headMsg.name)) { //ACTION and confirmation and
                             currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
                             senderPacketInfo.acknowledgeReceivedFrom(headMsg.name);
                             if (senderPacketInfo.packet.type != MPacket.ACTION &&
                                     senderPacketInfo.ackFromAll.isEmpty()) {
-                                if (senderPacketInfo.packet.type == MPacket.QUITMESSAGE){
-                                    Mazewar.quit();
-                                }
                                 synchronized (resendQueue) {
                                     resendQueue.remove(headMsg.toAckNumber);
                                 }
+
                             }
                         }
                     }
                     break;
-                case MPacket.QUITMESSAGE:
-                    sendBackAck(headMsg, MPacket.RECEIVED);
-                    break;
+
                 case MPacket.RELEASED:
                     //send back ack
                     if(!headMsg.name.equals(selfName)) {

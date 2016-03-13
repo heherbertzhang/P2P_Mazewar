@@ -24,10 +24,10 @@ public class ClientListenerThread implements Runnable {
 
 
                 MPacket received = (MPacket) mSocket.readObject();
-                if(received.type == MPacket.QUITMESSAGE){
+                /*f(received.type == MPacket.QUITMESSAGE){
                     incomingQueue.add(received);
                     return;
-                }
+                }*/
 
                 //System.out.println("listening: " + received.toString());
                 if (!incomingQueue.offer(received)) {

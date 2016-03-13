@@ -51,8 +51,8 @@ public class GUIClient extends LocalClient implements KeyListener {
                         if((e.getKeyChar() == 'q') || (e.getKeyChar() == 'Q')) {
                                 // should not quit imediattly
                                 // Up-arrow moves forward.
-                                addActionEvent(MPacket.QUIT);
-                                //Mazewar.quit();
+                                //addActionEvent(MPacket.QUIT);
+                                Mazewar.quit();
 
                         } else if(e.getKeyCode() == KeyEvent.VK_UP) {
                                 //forward();

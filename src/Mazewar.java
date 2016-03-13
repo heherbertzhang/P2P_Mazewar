@@ -77,7 +77,7 @@ public class Mazewar extends JFrame {
     private Hashtable<Integer,SenderPacketInfo> waitToResendQueue;
     private BlockingQueue<MPacket> confirmationQueue;
     private AvoidRepeatence avoidRepeatenceHelper;
-    private AtomicInteger timeout;
+    private Map<String, Long> timeout;
     private AtomicInteger DeriRTT;
     public static String playerName;
     public AtomicBoolean  startRender;
@@ -260,7 +260,7 @@ public class Mazewar extends JFrame {
         this.neighbours = new Hashtable<String, IpLocation>();
         this.socketsForBroadcast = new Hashtable<String, MSocket>();
         this.confirmationQueue= new LinkedBlockingQueue <MPacket>();
-        this.timeout = new AtomicInteger(150);
+        this.timeout = new Hashtable<String, Long>();
         this.DeriRTT = new AtomicInteger(5);
         this.avoidRepeatenceHelper = new AvoidRepeatence();
         //Initialize queue of events
@@ -415,14 +415,14 @@ public class Mazewar extends JFrame {
         //Start a new listener thread
         //new Thread(new ClientListenerThread(socketsForBroadcast, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
         new ConfirmationBroadcast(sequenceNumber, confirmationQueue, socketsForBroadcast, waitToResendQueue, (BlockingQueue) incomingQueue).start();
-        new ResendThread(150, waitToResendQueue,socketsForBroadcast).start();
+        new ResendThread(150, timeout, waitToResendQueue,socketsForBroadcast).start();
 
         new IncomingMessageHandleThread(incomingQueue, receivedQueue, waitToResendQueue, confirmationQueue,
                 actionHoldingCount, socketsForBroadcast, curTimeStamp, avoidRepeatenceHelper, numberOfPlayers, playerName, sequenceNumber, this).start();
         new ReceivedThread(receivedQueue, displayQueue, waitToResendQueue, incomingQueue, curTimeStamp, socketsForBroadcast,
                 localPlayers, actionHoldingCount, playerName,sequenceNumber, numberOfPlayers).start();
         new DisplayThread(displayQueue, clientTable).start();
-
+        new BulletSender(eventQueue);
 
 
     }

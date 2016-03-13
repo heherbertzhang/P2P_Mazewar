@@ -152,8 +152,8 @@ public class MSocket{
             }catch(EOFException e){
                 e.printStackTrace();
                 close();
-                System.out.println("Exiting");
-                System.exit(0);
+                System.out.println("Exiting MSocket");
+                //System.exit(0);
             }catch(IOException e){
                 e.printStackTrace();
             }catch(ClassNotFoundException e){

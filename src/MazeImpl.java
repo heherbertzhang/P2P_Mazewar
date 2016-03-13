@@ -325,7 +325,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
                 //System.out.println("move bullet when fire");
                 clientFired.add(client);
                 Projectile prj = new Projectile(client);
-
+                BulletSender.sendNewBullet();
                 /* Write the new cell */
                 //System.out.println("write the new cell");
                 projectileMap.put(prj, newPoint);
@@ -391,12 +391,12 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
                         if(!projectileMap.isEmpty()) {
                                 Iterator<Projectile> it = projectileMap.keySet().iterator();
                                 synchronized(projectileMap) {
-                                        while(it.hasNext()) {
+                                        /*while(it.hasNext()) {
                                                 Object o = it.next();
                                                 assert(o instanceof Projectile);
                                                 sendProjectileSignal((Projectile) o);
                                                 //deadPrj.addAll(moveProjectile((Projectile)o));
-                                        }
+                                        }*/
                                         /*it = deadPrj.iterator();
                                         while(it.hasNext()) {
                                                 Object o = it.next();
@@ -406,6 +406,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
                                                 clientFired.remove(prj.getOwner());
                                         }
                                         deadPrj.clear();*/
+
                                 }
                         }
                         try {
