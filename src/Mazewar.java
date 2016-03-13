@@ -86,7 +86,6 @@ public class Mazewar extends JFrame {
     static int selfPort;
 
     public void quit_player(String name){
-        clientTable.remove(name);
         neighbours.remove(name);
         socketsForBroadcast.remove(name);
         waitToResendQueue.clear();
@@ -98,6 +97,10 @@ public class Mazewar extends JFrame {
         }*/
 
     }
+
+	public void remove_ClientTable(String name){
+	       clientTable.remove(name);
+	}
     public void addNeighbours(String name, IpLocation neighbours) {
         this.neighbours.put(name, neighbours);
     }
@@ -256,7 +259,7 @@ public class Mazewar extends JFrame {
         this.neighbours = new Hashtable<String, IpLocation>();
         this.socketsForBroadcast = new Hashtable<String, MSocket>();
         this.confirmationQueue= new LinkedBlockingQueue <MPacket>();
-        this.timeout = 2000;
+        this.timeout = 200;
         this.avoidRepeatenceHelper = new AvoidRepeatence();
         //Initialize queue of events
         this.eventQueue = new LinkedBlockingQueue<MPacket>();
@@ -490,9 +493,15 @@ class NamingServerListenerThread extends Thread {
 
                 if (result.isQuit == true) {
                     // this mean the client recieve itself remote clint's quitting message
-                    mazewarClient.quit_player(result.quitPlayer);
                     Client quitClient = mazewarClient.clientTable.get(result.quitPlayer);
-                    quitClient.unregisterMaze();
+                    System.out.println("test result: " +  result.toString());
+                    System.out.println("maze" + mazewarClient.numberOfPlayers.get());
+                    System.out.println("quit player is :" + result.quitPlayer);
+                    System.out.println("Client table is" +  mazewarClient.clientTable.toString());
+                    System.out.println("quit clients is:" + quitClient.toString());
+ 					mazewarClient.quit_player(result.quitPlayer);                    
+					quitClient.unregisterMaze();
+ 					mazewarClient.remove_ClientTable(result.quitPlayer);
                     System.out.println("Unregister Maze of player!" + result.quitPlayer);
                 }
 
