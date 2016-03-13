@@ -325,7 +325,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
                 //System.out.println("move bullet when fire");
                 clientFired.add(client);
                 Projectile prj = new Projectile(client);
-                BulletSender.sendNewBullet();
+
                 /* Write the new cell */
                 //System.out.println("write the new cell");
                 projectileMap.put(prj, newPoint);
