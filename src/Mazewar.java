@@ -422,7 +422,7 @@ public class Mazewar extends JFrame {
         new ReceivedThread(receivedQueue, displayQueue, waitToResendQueue, incomingQueue, curTimeStamp, socketsForBroadcast,
                 localPlayers, actionHoldingCount, playerName,sequenceNumber, numberOfPlayers).start();
         new DisplayThread(displayQueue, clientTable).start();
-        new BulletSender(eventQueue);
+        new BulletSender(eventQueue).start();
 
 
     }
