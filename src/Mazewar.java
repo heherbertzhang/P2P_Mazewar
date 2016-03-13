@@ -259,7 +259,7 @@ public class Mazewar extends JFrame {
         this.neighbours = new Hashtable<String, IpLocation>();
         this.socketsForBroadcast = new Hashtable<String, MSocket>();
         this.confirmationQueue= new LinkedBlockingQueue <MPacket>();
-        this.timeout = 200;
+        this.timeout = 50;
         this.avoidRepeatenceHelper = new AvoidRepeatence();
         //Initialize queue of events
         this.eventQueue = new LinkedBlockingQueue<MPacket>();

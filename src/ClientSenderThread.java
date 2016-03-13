@@ -74,6 +74,7 @@ public class ClientSenderThread implements Runnable {
                     assert false;
                 }
             } catch (Exception e) {
+                System.out.println("debug:");
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
             }
