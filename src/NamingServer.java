@@ -74,9 +74,9 @@ public class NamingServer {
                         ObjectOutputStream oos = entry.getValue();
                         oos.writeObject(new IpBroadCastPacket(true,packet.quitPlayer));
                     }
-
-
                 }
+
+
                 else {
                     // mean join
                     String name = packet.hostName;
