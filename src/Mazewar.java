@@ -71,7 +71,7 @@ public class Mazewar extends JFrame {
     private Map<String, IpLocation> neighbours;
     private Map<String, MSocket> socketsForBroadcast;
     protected AtomicInteger actionHoldingCount;
-    protected AtomicInteger numberOfPlayers;
+    public static AtomicInteger numberOfPlayers;
     protected AtomicInteger curTimeStamp;
     protected AtomicInteger sequenceNumber;
     private Hashtable<Integer,SenderPacketInfo> waitToResendQueue;
@@ -217,7 +217,7 @@ public class Mazewar extends JFrame {
         // (inform other implementations on the network that you have
         //  left, etc.)
         try {
-
+            numberOfPlayers.decrementAndGet();
             IpPacket QuitPackat = new IpPacket(true, playerName);
             Socket NamingServer = new Socket(namingServerHost,namingServerPort);
             ObjectOutputStream toNS = new ObjectOutputStream(NamingServer.getOutputStream());
