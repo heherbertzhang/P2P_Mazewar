@@ -6,11 +6,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class BulletSender extends Thread {
     private BlockingQueue eventQueue;
+    //private Mazewar mazewarAgent;
     static AtomicInteger bulletMoveCount = new AtomicInteger(0);;
     //sendMoveProjectile
 
     public BulletSender(BlockingQueue eventQueue) {
         this.eventQueue = eventQueue;
+        //this.mazewarAgent = mazewarAgent;
     }
 
     static public void sendNewBullet(){
@@ -23,7 +25,7 @@ public class BulletSender extends Thread {
         while (true){
 
             if(bulletMoveCount.get()>0){
-                MPacket packet = new MPacket(getName(), MPacket.ACTION, MPacket.MOVE_BULLET);
+                MPacket packet = new MPacket(Mazewar.playerName, MPacket.ACTION, MPacket.MOVE_BULLET);
                 bulletMoveCount.decrementAndGet();
                 eventQueue.add(packet);
                 try {
