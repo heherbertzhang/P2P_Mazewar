@@ -584,7 +584,7 @@ class NamingServerListenerThread extends Thread {
                         if(!mazewarClient.waitToResendQueue.isEmpty()){
                             System.out.println("resendqueue");
                             for(Map.Entry<Integer, SenderPacketInfo> e : mazewarClient.waitToResendQueue.entrySet()){
-                                System.out.println(e.getValue().packet.toString());
+                                System.out.println(e.getKey() + " : " +e.getValue().packet.toString());
                             }
                             System.out.println("resend queueu end");
                         }
