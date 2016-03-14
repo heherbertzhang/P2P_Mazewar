@@ -218,6 +218,7 @@ public class IncomingMessageHandleThread extends Thread {
                         //check to see if we can remove the confirmation msg from the resend queue
                         SenderPacketInfo senderPacketInfo3 = resendQueue.get(headMsg.sequenceNumber);
                         if(senderPacketInfo3 != null) {
+                            senderPacketInfo3.getReleasedFrom(selfName);
                             if (senderPacketInfo3.getReleasedCount == numOfPlayer.get()) {
 
                                 synchronized (resendQueue) {
