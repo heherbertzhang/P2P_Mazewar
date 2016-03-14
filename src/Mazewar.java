@@ -83,7 +83,7 @@ public class Mazewar extends JFrame {
     static String namingServerHost;
     static int namingServerPort;
     static int selfPort;
-    static ObjectOutputStream toNamingServer;
+    ObjectOutputStream toNamingServer;
     ObjectInputStream fromNamingServer;
 
     public void quit_player(String name) {
@@ -221,10 +221,11 @@ public class Mazewar extends JFrame {
         //  left, etc.)
         try {
             IpPacket QuitPackat = new IpPacket(true, playerName);
-            //Socket NamingServer = new Socket(namingServerHost, namingServerPort);
-            ObjectOutputStream toNS = toNamingServer;
+            Socket NamingServer = new Socket(namingServerHost, namingServerPort);
+            ObjectOutputStream toNS = new ObjectOutputStream(NamingServer.getOutputStream()); // cannot use that already create one!
             System.out.println("I am writting to the outputstream");
             toNS.writeObject(QuitPackat);
+
         } catch (UnknownHostException e) {
             e.printStackTrace();
         } catch (IOException e) {
