@@ -262,16 +262,19 @@ public class IncomingMessageHandleThread extends Thread {
 
         replymsg.timestamp = currentTimeStamp.incrementAndGet();
 
-        /*
-        if(!mazewarAgent.confirmationQueue.isEmpty()){
-            synchronized (mazewarAgent.confirmationQueue){
-                MPacket packet = mazewarAgent.eventQueue.peek();
-                packet.toAckNumber = headMsg.sequenceNumber;
-            }
-        }*/
 
-        socket.writeObject(replymsg);
-        System.out.println("reply to release:" + replymsg.toString());
+        synchronized (mazewarAgent.confirmationQueue) {
+            if (!mazewarAgent.confirmationQueue.isEmpty()) {
+                MPacket packet = mazewarAgent.confirmationQueue.peek();
+                packet.toAckNumber = headMsg.sequenceNumber;
+                System.out.println("piggybacked!!! ack:" + replymsg.toString());
+            }
+            else{
+                socket.writeObject(replymsg);
+                //System.out.println("reply to release:" + replymsg.toString());
+            }
+        }
+
     }
 
     public void setConfirmed(MPacket headMsg) {
@@ -414,11 +417,10 @@ class DisplayThread extends Thread {
         this.clientTable = clientTable;
     }
 
-    public void clientAction(MPacket poll, Client client){
+    public void clientAction(MPacket poll, Client client) {
         if (poll.event == MPacket.UP) {
             client.forward();
-        }
-        else if (poll.event == MPacket.DOWN) {
+        } else if (poll.event == MPacket.DOWN) {
             client.backup();
         } else if (poll.event == MPacket.LEFT) {
             client.turnLeft();
@@ -457,12 +459,11 @@ class DisplayThread extends Thread {
                 client = clientTable.get(poll.name);
                 if (poll.event == MPacket.UP) {
                     client.forward();
-                } else if(poll.event == MPacket.PACK){
-                    for(MPacket packet: poll.eventList){
+                } else if (poll.event == MPacket.PACK) {
+                    for (MPacket packet : poll.eventList) {
                         clientAction(packet, client);
                     }
-                }
-                else if (poll.event == MPacket.DOWN) {
+                } else if (poll.event == MPacket.DOWN) {
                     client.backup();
                 } else if (poll.event == MPacket.LEFT) {
                     client.turnLeft();

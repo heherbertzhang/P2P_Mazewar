@@ -43,7 +43,7 @@ public class ClientSenderThread implements Runnable {
                 MPacket toClient = new MPacket(MPacket.ACTION, MPacket.PACK);
                 List<MPacket> eventList = new LinkedList<>();
                 synchronized (eventQueue) {
-                    while (delta < 50) {
+                    while (delta < 85) {
 
                         MPacket temp = (MPacket) eventQueue.take();//must declare here as temp variable!!!!!!!!!!!!!!!!!!!
                         //!!!!!!!!!!!!!!!!cannot declare out side since it will be reused that previous value!!!!!!!!!!!!!!!!!

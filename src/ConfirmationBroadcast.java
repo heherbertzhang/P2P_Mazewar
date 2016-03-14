@@ -29,7 +29,10 @@ public class ConfirmationBroadcast  extends Thread {
         System.out.println("starting confirmation broadcast thread: "  + Thread.currentThread().getId());
         try{
             while (true){
-                MPacket toClient = (MPacket) confirmation.take();//// TODO: 2016-02-29 why so many confirmation to take?
+                MPacket toClient = null;
+                synchronized (confirmation) {
+                    toClient = (MPacket) confirmation.take();//// TODO: 2016-02-29 why so many confirmation to take?
+                }
                 toClient.sequenceNumber = sequenceNumber.incrementAndGet();
                 //Initlize the List for ack
                 Hashtable<String, Boolean> All_neighbour = new Hashtable<String, Boolean>();
