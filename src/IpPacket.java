@@ -63,6 +63,7 @@ class IpBroadCastPacket implements Serializable{
     public IpBroadCastPacket(Boolean isQuit, String quitPlayer){
         this.isQuit = isQuit;
         this.quitPlayer = quitPlayer;
+        this.isQuit = false;
     }
 
     public IpBroadCastPacket(int type) {
@@ -73,5 +74,6 @@ class IpBroadCastPacket implements Serializable{
         this.players = players;
         this.type = type;
         this.mClientTable = mClientTable;
+        this.isQuit = false;
     }
 }
