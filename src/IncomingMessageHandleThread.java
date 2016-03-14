@@ -177,7 +177,7 @@ public class IncomingMessageHandleThread extends Thread {
                 case MPacket.RELEASED:
                     //send back ack
                     if (!headMsg.name.equals(selfName)) {
-                        sendBackAck(headMsg, MPacket.RECEIVED);
+                        sendBackAck(headMsg);
                     }
 
                     SenderPacketInfo senderPacketInfo2 = resendQueue.get(headMsg.toAckNumber);
@@ -239,7 +239,7 @@ public class IncomingMessageHandleThread extends Thread {
 
                     // TODO: 2016-03-02 cinfirmation does not need to compare time so no need lamport clock!? or it broadcast so need?
                     //currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update currentTimeStamp
-                    sendBackAck(headMsg, MPacket.RECEIVED);
+                    sendBackAck(headMsg);
 
                     if (!avoidRepeatenceHelper.checkRepeatenceForProcess(headMsg.name, headMsg.sequenceNumber)) {
                         //not a duplicate message so we can do something
@@ -251,18 +251,26 @@ public class IncomingMessageHandleThread extends Thread {
 
     }
 
-    public void sendBackAck(MPacket headMsg, int type) {
+    public void sendBackAck(MPacket headMsg) {
         System.out.println("release msg replying the headmsg is : " + headMsg.toString());
         MSocket socket = neighbousSockets.get(headMsg.name);
-        MPacket replymsg = new MPacket(type, 0);
+        MPacket replymsg = new MPacket(MPacket.RECEIVED, 0);
         replymsg.name = selfName;
         assert headMsg.sequenceNumber != 0;
 
         replymsg.toAckNumber = headMsg.sequenceNumber;
-        if (type == MPacket.RELEASED) {
-            replymsg.sequenceNumber = curSequenceNum.incrementAndGet();
-        }
+
+
         replymsg.timestamp = currentTimeStamp.incrementAndGet();
+
+        /*
+        if(!mazewarAgent.confirmationQueue.isEmpty()){
+            synchronized (mazewarAgent.confirmationQueue){
+                MPacket packet = mazewarAgent.eventQueue.peek();
+                packet.toAckNumber = headMsg.sequenceNumber;
+            }
+        }*/
+
         socket.writeObject(replymsg);
         System.out.println("reply to release:" + replymsg.toString());
     }

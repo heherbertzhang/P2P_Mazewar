@@ -42,13 +42,16 @@ public class ClientSenderThread implements Runnable {
                 long delta = 0;
                 MPacket toClient = new MPacket(MPacket.ACTION, MPacket.PACK);
                 List<MPacket> eventList = new LinkedList<>();
-                while (delta < 50) {
-                    MPacket temp = (MPacket) eventQueue.take();//must declare here as temp variable!!!!!!!!!!!!!!!!!!!
-                    //!!!!!!!!!!!!!!!!cannot declare out side since it will be reused that previous value!!!!!!!!!!!!!!!!!
-                    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    eventList.add(temp);
-                    currentTimeMillis = System.currentTimeMillis();
-                    delta = currentTimeMillis - startTimeMillis;
+                synchronized (eventQueue) {
+                    while (delta < 50) {
+
+                        MPacket temp = (MPacket) eventQueue.take();//must declare here as temp variable!!!!!!!!!!!!!!!!!!!
+                        //!!!!!!!!!!!!!!!!cannot declare out side since it will be reused that previous value!!!!!!!!!!!!!!!!!
+                        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        eventList.add(temp);
+                        currentTimeMillis = System.currentTimeMillis();
+                        delta = currentTimeMillis - startTimeMillis;
+                    }
                 }
                 if(eventList.size() == 1){
                     toClient.event = eventList.get(0).event;
