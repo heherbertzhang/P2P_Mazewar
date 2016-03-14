@@ -12,7 +12,7 @@ public class ClientListenerThread implements Runnable {
         this.incomingQueue = incomingQueue;
         this.mSocket = mSocket;
 
-        if (Debug.debug) System.out.println("Instatiating ClientListenerThread");
+        //if (Debug.debug) System.out.println("Instatiating ClientListenerThread");
     }
 
     public void run() {

@@ -55,14 +55,14 @@ public class IncomingMessageHandleThread extends Thread {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println("incoming message  : " + headMsg.toString());
+            //System.out.println("incoming message  : " + headMsg.toString());
 
             switch (headMsg.type) {
                 case MPacket.ACTION:
                     //// TODO: 2016-02-27 to avoid bug the best we can do is to no check the action holding count
-                    System.out.println("action incoming message: " + headMsg.toString());
+                    //System.out.println("action incoming message: " + headMsg.toString());
                     if (headMsg.name.equals(selfName)) {
-                        System.out.println("self action");
+                        //System.out.println("self action");
 
                         PacketInfo packetInfo = new PacketInfo(headMsg);
                         packetInfo.isAck = true;
@@ -118,7 +118,7 @@ public class IncomingMessageHandleThread extends Thread {
                     //add to the received queue
                     if (!isDuplicated) {
                         currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update timestamp
-                        System.out.println("not duplicated action msg:" + headMsg.toString());
+                        //System.out.println("not duplicated action msg:" + headMsg.toString());
                         //no repeatence so that we can add to the queue
                         PacketInfo packetInfo = new PacketInfo(headMsg);
                         packetInfo.isAck = true;
@@ -141,7 +141,7 @@ public class IncomingMessageHandleThread extends Thread {
                         }
 
                         mSocket.writeObject(replyMsg); // write back reply after increment sequence number
-                        System.out.println("sending reply message for action: " + replyMsg.toString() + " to " + headMsg.name);
+                        //System.out.println("sending reply message for action: " + replyMsg.toString() + " to " + headMsg.name);
                         receivedQueue.add(packetInfo);
                         //System.out.println("added to received queue: " + headMsg.toString());
                     }
@@ -187,13 +187,13 @@ public class IncomingMessageHandleThread extends Thread {
                         if (!senderPacketInfo2.isGotRleasedFrom(headMsg.name)) {
                             //currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
                             senderPacketInfo2.getReleasedFrom(headMsg.name);
-                            System.out.println("now have released: " + senderPacketInfo2.getReleasedCount);
+                            //System.out.println("now have released: " + senderPacketInfo2.getReleasedCount);
                             synchronized (senderPacketInfo2) {
                                 if (senderPacketInfo2.getReleasedCount == numOfPlayer.get()) {
 
                                     synchronized (resendQueue) {
                                         //remove from the resendqueue
-                                        System.out.println("remove resend queue");
+                                        //System.out.println("remove resend queue");
                                         resendQueue.remove(headMsg.toAckNumber);
                                     }
 
@@ -215,18 +215,18 @@ public class IncomingMessageHandleThread extends Thread {
                     //set the message to confirmed on the received queue by finding it first
                     //but will not remove it from the queue since only the head of the queue can be removed and
                     //add to the display queue
-                    System.out.println("confirmation incoming:" + headMsg.toString() + " confirm " + headMsg.toConfrimSequenceNumber);
+                    //System.out.println("confirmation incoming:" + headMsg.toString() + " confirm " + headMsg.toConfrimSequenceNumber);
                     if (headMsg.name.equals(selfName)) {
                         //check to see if we can remove the confirmation msg from the resend queue
                         SenderPacketInfo senderPacketInfo3 = resendQueue.get(headMsg.sequenceNumber);
                         if (senderPacketInfo3 != null) {
                             senderPacketInfo3.getReleasedFrom(selfName);
-                            System.out.println("release!!!!!!:" + senderPacketInfo3.getReleasedCount);
+                            //System.out.println("release!!!!!!:" + senderPacketInfo3.getReleasedCount);
                             if (senderPacketInfo3.getReleasedCount == numOfPlayer.get()) {
 
                                 synchronized (resendQueue) {
                                     //remove from the resendqueue
-                                    System.out.println("remove resend queue when self confirm");
+                                    //System.out.println("remove resend queue when self confirm");
                                     resendQueue.remove(headMsg.sequenceNumber);
                                 }
                             }
@@ -251,7 +251,7 @@ public class IncomingMessageHandleThread extends Thread {
     }
 
     public void sendBackAck(MPacket headMsg) {
-        System.out.println("release msg replying the headmsg is : " + headMsg.toString());
+        //System.out.println("release msg replying the headmsg is : " + headMsg.toString());
         MSocket socket = neighbousSockets.get(headMsg.name);
         MPacket replymsg = new MPacket(MPacket.RECEIVED, 0);
         replymsg.name = selfName;
@@ -271,7 +271,7 @@ public class IncomingMessageHandleThread extends Thread {
         }*/
 
         socket.writeObject(replymsg);
-        System.out.println("reply to release:" + replymsg.toString());
+        //System.out.println("reply to release:" + replymsg.toString());
     }
 
     public void setConfirmed(MPacket headMsg) {
@@ -280,7 +280,7 @@ public class IncomingMessageHandleThread extends Thread {
                     ((PacketInfo) p).Packet.sequenceNumber == headMsg.toConfrimSequenceNumber) {
                 ((PacketInfo) p).confirmMsgSequenceNum = headMsg.sequenceNumber;
                 ((PacketInfo) p).isConfirmed = true;
-                System.out.println("set confirmed for:" + ((PacketInfo) p).Packet.toString());
+                //System.out.println("set confirmed for:" + ((PacketInfo) p).Packet.toString());
                 break;
             }
         }
@@ -366,11 +366,11 @@ class ReceivedThread extends Thread {
 
                     MSocket mSocket = neighbourSockets.get(peek.Packet.name);
                     mSocket.writeObject(reply);
-                    System.out.println("sending release at head!!!!!" + reply.toString() + " reply to " + peek.Packet.toString());
+                    //System.out.println("sending release at head!!!!!" + reply.toString() + " reply to " + peek.Packet.toString());
 
 
                     peek.isReleased = true;
-                    System.out.println("received queue head : " + peek.Packet.toString() + " isreleased " + peek.isReleased);
+                    //System.out.println("received queue head : " + peek.Packet.toString() + " isreleased " + peek.isReleased);
 
                     //add to resend queue for future use
                     reply.sequenceNumber = curSequenceNum.incrementAndGet();
@@ -392,7 +392,7 @@ class ReceivedThread extends Thread {
                 //remove and add to display queue
                 PacketInfo removed = (PacketInfo) receivedQueue.poll();
                 displayQueue.add(removed.Packet);
-                System.out.println("adding to display queue: " + removed.Packet.toString());
+                //System.out.println("adding to display queue: " + removed.Packet.toString());
 
                 //decrease the action holding count
                 if (localPlayers.contains(removed.Packet.name)) {
@@ -425,7 +425,7 @@ class DisplayThread extends Thread {
         } else if (poll.event == MPacket.RIGHT) {
             client.turnRight();
         } else if (poll.event == MPacket.FIRE) {
-            System.out.println(client.getName() + " about to call fire()");
+            //System.out.println(client.getName() + " about to call fire()");
             client.fire();
         } else if (poll.event == MPacket.DIE) {
             Player newPosition = poll.players[0];
@@ -443,7 +443,7 @@ class DisplayThread extends Thread {
     }
 
     public void run() {
-        if (Debug.debug) System.out.println("Starting display queue thread: " + Thread.currentThread().getId());
+        //if (Debug.debug) System.out.println("Starting display queue thread: " + Thread.currentThread().getId());
         Client client = null;
 
         while (true) {
@@ -453,7 +453,7 @@ class DisplayThread extends Thread {
                     poll = displayQueue.take();
                 }
 
-                if (Debug.debug) System.out.println("ready to take action !: " + poll.toString());
+                //if (Debug.debug) System.out.println("ready to take action !: " + poll.toString());
                 client = clientTable.get(poll.name);
                 if (poll.event == MPacket.UP) {
                     client.forward();
@@ -469,7 +469,7 @@ class DisplayThread extends Thread {
                 } else if (poll.event == MPacket.RIGHT) {
                     client.turnRight();
                 } else if (poll.event == MPacket.FIRE) {
-                    System.out.println(client.getName() + " about to call fire()");
+                    //System.out.println(client.getName() + " about to call fire()");
                     client.fire();
                 } else if (poll.event == MPacket.DIE) {
                     Player newPosition = poll.players[0];

@@ -54,7 +54,7 @@ public abstract class LocalClient extends Client {
             packet = new MPacket(getName(), MPacket.QUITMESSAGE, action);
         }
         eventQueue.put(packet);
-        System.out.println("GUI putting to event queue:" + packet);
+        //System.out.println("GUI putting to event queue:" + packet);
     }
 
     public void sendKillClient(Player player, Player sourcePlayer) {

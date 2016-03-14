@@ -32,7 +32,7 @@ public class ResendThread extends Thread {
                         for (Map.Entry<String, Boolean> k : lostClients.entrySet()) {
                             MSocket lostClientSocket = neighbours_socket.get(k.getKey());
                             lostClientSocket.writeObject(e.getValue().packet);
-                            System.out.println("resending to client:" + k.getKey() + " and packet:" + e.getValue().packet.toString());
+                            //System.out.println("resending to client:" + k.getKey() + " and packet:" + e.getValue().packet.toString());
                         }
                     }
 

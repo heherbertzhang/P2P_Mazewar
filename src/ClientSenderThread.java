@@ -69,7 +69,7 @@ public class ClientSenderThread implements Runnable {
                 toClient.sequenceNumber = this.squenceNumber.incrementAndGet();
 
 
-                System.out.println("Sending " + toClient.toString());
+                //System.out.println("Sending " + toClient.toString());
 
                 //Initlize the List for ack
                 Hashtable<String, Boolean> All_neighbour = new Hashtable<String, Boolean>();

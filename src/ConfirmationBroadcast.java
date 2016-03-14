@@ -46,7 +46,7 @@ public class ConfirmationBroadcast  extends Thread {
                     waitingToResend.put(toClient.sequenceNumber, info);//may need resend if drop the package
                 }
 
-                System.out.println("sending confirmation: " + toClient.toString());
+                //System.out.println("sending confirmation: " + toClient.toString());
                 for (Map.Entry<String, MSocket> e : neighbours_socket.entrySet()) {
                     MSocket each_client_socket = e.getValue();
                     each_client_socket.writeObject(toClient);
