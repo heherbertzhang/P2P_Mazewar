@@ -54,10 +54,11 @@ public class ClientSenderThread implements Runnable {
                     }
                 }
                 if(eventList.size() == 1){
-                    toClient.event = eventList.get(0).event;
+                    toClient = eventList.get(0);
 
                 }
                 else {
+                    toClient.name = eventList.get(0).name;
                     toClient.eventList = eventList;
                     // first broadcast
                     toClient.timestamp = lamportClock.incrementAndGet();

@@ -64,7 +64,6 @@ public class IncomingMessageHandleThread extends Thread {
                     if (headMsg.name.equals(selfName)) {
                         System.out.println("self action");
 
-
                         PacketInfo packetInfo = new PacketInfo(headMsg);
                         packetInfo.isAck = true;
                         packetInfo.isReleased = false;//cannot release yet!!!!!!!! must be head of received queue to release
