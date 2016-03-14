@@ -12,7 +12,7 @@ public class IpPacket implements Serializable{
     public IpLocation Ip;
     public int statusCode;
     public Player player;
-    Boolean isQuit;
+    boolean isQuit;
     String quitPlayer;
 
 
