@@ -595,7 +595,18 @@ class NamingServerListenerThread extends Thread {
                         if (mazewarClient.displayQueue.isEmpty() && mazewarClient.waitToResendQueue.isEmpty() && mazewarClient.receivedQueue.isEmpty()
                                 && mazewarClient.incomingQueue.isEmpty()){
 
-                            Player player = new Player(mazewarClient.guiClient.getName(), mazewarClient.guiClient.getPoint(), mazewarClient.guiClient.getOrientation().getDirection());
+                            System.out.println("orientation!!!!!!:" + mazewarClient.guiClient.getOrientation().toString() + ": " + mazewarClient.guiClient.getOrientation().getDirection());
+                            int direction;
+                            if (mazewarClient.guiClient.getOrientation().getDirection() == 2 ){
+                                direction = 1;
+                            }
+                            else if (mazewarClient.guiClient.getOrientation().getDirection() == 1){
+                                direction = 2;
+                            }
+                            else{
+                                direction =mazewarClient.guiClient.getOrientation().getDirection();
+                            }
+                            Player player = new Player(mazewarClient.guiClient.getName(), mazewarClient.guiClient.getPoint(), direction);
                             IpPacket toServer = new IpPacket("0","0",0,player);
                             System.out.println("about to reply to server");
                             objectOutputStream.writeObject(toServer);
