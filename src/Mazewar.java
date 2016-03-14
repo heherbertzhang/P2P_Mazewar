@@ -46,47 +46,45 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @version $Id: Mazewar.java 371 2004-02-10 21:55:32Z geoffw $
  */
 
-class PacketINFOComparator implements Comparator<PacketInfo>{
+class PacketINFOComparator implements Comparator<PacketInfo> {
     @Override
-    public int compare(PacketInfo x, PacketInfo y){
-        if(x.Packet.timestamp < y.Packet.timestamp){
+    public int compare(PacketInfo x, PacketInfo y) {
+        if (x.Packet.timestamp < y.Packet.timestamp) {
             return -1;
-        }
-        else if(x.Packet.timestamp > y.Packet.timestamp){
+        } else if (x.Packet.timestamp > y.Packet.timestamp) {
             return 1;
+        } else {
+            return x.Packet.name.compareTo(y.Packet.name);
         }
-		else{
-			return x.Packet.name.compareTo(y.Packet.name);
-		}
     }
 }
 
 
 public class Mazewar extends JFrame {
-    private MServerSocket serverSocket;
-	private Queue<PacketInfo> receivedQueue;
-	private Queue<MPacket> displayQueue;
-    private Queue<MPacket> incomingQueue;
+    public MServerSocket serverSocket;
+    public Queue<PacketInfo> receivedQueue;
+    public Queue<MPacket> displayQueue;
+    public Queue<MPacket> incomingQueue;
     protected List<String> localPlayers = null;
-    private Map<String, IpLocation> neighbours;
-    private Map<String, MSocket> socketsForBroadcast;
+    public Map<String, IpLocation> neighbours;
+    public Map<String, MSocket> socketsForBroadcast;
     protected AtomicInteger actionHoldingCount;
     public static AtomicInteger numberOfPlayers;
     protected AtomicInteger curTimeStamp;
     protected AtomicInteger sequenceNumber;
-    private Hashtable<Integer,SenderPacketInfo> waitToResendQueue;
-    private BlockingQueue<MPacket> confirmationQueue;
-    private AvoidRepeatence avoidRepeatenceHelper;
-    private Map<String, Long> timeout;
-    private AtomicInteger DeriRTT;
+    public Hashtable<Integer, SenderPacketInfo> waitToResendQueue;
+    public BlockingQueue<MPacket> confirmationQueue;
+    public AvoidRepeatence avoidRepeatenceHelper;
+    public Map<String, Long> timeout;
+    public AtomicInteger DeriRTT;
     public static String playerName;
-    public AtomicBoolean  startRender;
+    public AtomicBoolean startRender;
 
     static String namingServerHost;
     static int namingServerPort;
     static int selfPort;
 
-    public void quit_player(String name){
+    public void quit_player(String name) {
         numberOfPlayers.decrementAndGet();
         neighbours.remove(name);
         socketsForBroadcast.remove(name);
@@ -100,9 +98,10 @@ public class Mazewar extends JFrame {
 
     }
 
-	public void remove_ClientTable(String name){
-	       clientTable.remove(name);
-	}
+    public void remove_ClientTable(String name) {
+        clientTable.remove(name);
+    }
+
     public void addNeighbours(String name, IpLocation neighbours) {
         this.neighbours.put(name, neighbours);
     }
@@ -110,10 +109,12 @@ public class Mazewar extends JFrame {
     public void setNeighbours(Map<String, IpLocation> neighbours) {
         this.neighbours = neighbours;
     }
-    public void set_neighbour_sockets_list_for_sender(Map<String, MSocket> newlist){
+
+    public void set_neighbour_sockets_list_for_sender(Map<String, MSocket> newlist) {
         socketsForBroadcast = newlist;
     }
-    public void add_neighbour_socket_for_sender( String name, MSocket socket){
+
+    public void add_neighbour_socket_for_sender(String name, MSocket socket) {
         socketsForBroadcast.put(name, socket);
         numberOfPlayers.incrementAndGet(); // TODO: 2016-02-27 need to decrement when dynamic disconnect
         avoidRepeatenceHelper.addProccess(name);
@@ -145,10 +146,10 @@ public class Mazewar extends JFrame {
     /**
      * The Mazewar instance itself.
      */
-    private Mazewar mazewar = null;
-    private MSocket mSocket = null;
-    private ObjectOutputStream out = null;
-    private ObjectInputStream in = null;
+    public Mazewar mazewar = null;
+    public MSocket mSocket = null;
+    public ObjectOutputStream out = null;
+    public ObjectInputStream in = null;
 
     /**
      * The {@link GUIClient} for the game.
@@ -169,19 +170,19 @@ public class Mazewar extends JFrame {
     /**
      * The panel that displays the {@link Maze}.
      */
-    private OverheadMazePanel overheadPanel = null;
+    public OverheadMazePanel overheadPanel = null;
 
     /**
      * The table the displays the scores.
      */
-    private JTable scoreTable = null;
+    public JTable scoreTable = null;
 
     /**
      * Create the textpane statically so that we can
      * write to it globally using
      * the static consolePrint methods
      */
-    private static final JTextPane console = new JTextPane();
+    public static final JTextPane console = new JTextPane();
 
     /**
      * Write a message to the console followed by a newline.
@@ -209,7 +210,6 @@ public class Mazewar extends JFrame {
     }
 
 
-
     /**
      * Static method for performing cleanup before exiting the game.
      */
@@ -219,15 +219,13 @@ public class Mazewar extends JFrame {
         //  left, etc.)
         try {
             IpPacket QuitPackat = new IpPacket(true, playerName);
-            Socket NamingServer = new Socket(namingServerHost,namingServerPort);
+            Socket NamingServer = new Socket(namingServerHost, namingServerPort);
             ObjectOutputStream toNS = new ObjectOutputStream(NamingServer.getOutputStream());
             System.out.println("I am writting to the outputstream");
             toNS.writeObject(QuitPackat);
-        }
-        catch(UnknownHostException e){
+        } catch (UnknownHostException e) {
             e.printStackTrace();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         System.exit(0);
@@ -237,7 +235,7 @@ public class Mazewar extends JFrame {
     /**
      * The place where all the pieces are put together.
      */
-    public Mazewar(String namingServerHost, int namingServerPort, int selfPort) throws IOException{
+    public Mazewar(String namingServerHost, int namingServerPort, int selfPort) throws IOException {
         super("ECE419 Mazewar");
         consolePrintLn("ECE419 Mazewar started!");
 
@@ -247,11 +245,11 @@ public class Mazewar extends JFrame {
         this.namingServerHost = namingServerHost;
         this.namingServerPort = namingServerPort;
         this.selfPort = selfPort;
-        this.waitToResendQueue = new Hashtable<Integer,SenderPacketInfo>();
+        this.waitToResendQueue = new Hashtable<Integer, SenderPacketInfo>();
         this.serverSocket = new MServerSocket(selfPort);
-		this.receivedQueue = new PriorityBlockingQueue<PacketInfo>(100, new PacketINFOComparator()) ;
-		this.displayQueue = new LinkedBlockingQueue<MPacket>(50);
-        this.incomingQueue =  new LinkedBlockingQueue<MPacket>(100);
+        this.receivedQueue = new PriorityBlockingQueue<PacketInfo>(100, new PacketINFOComparator());
+        this.displayQueue = new LinkedBlockingQueue<MPacket>(50);
+        this.incomingQueue = new LinkedBlockingQueue<MPacket>(100);
         this.actionHoldingCount = new AtomicInteger(0);
         this.localPlayers = new LinkedList<String>();
         this.numberOfPlayers = new AtomicInteger(1);
@@ -259,7 +257,7 @@ public class Mazewar extends JFrame {
         this.sequenceNumber = new AtomicInteger(0);
         this.neighbours = new Hashtable<String, IpLocation>();
         this.socketsForBroadcast = new Hashtable<String, MSocket>();
-        this.confirmationQueue= new LinkedBlockingQueue <MPacket>();
+        this.confirmationQueue = new LinkedBlockingQueue<MPacket>();
         this.timeout = new Hashtable<String, Long>();
         this.DeriRTT = new AtomicInteger(5);
         this.avoidRepeatenceHelper = new AvoidRepeatence();
@@ -287,7 +285,6 @@ public class Mazewar extends JFrame {
         playerName = name;
 
 
-
         //old code
         // mSocket = new MSocket(serverHost, serverPort);
         //Send hello packet to server
@@ -304,8 +301,6 @@ public class Mazewar extends JFrame {
         MPacket resp = (MPacket) mSocket.readObject();
         if (Debug.debug) System.out.println("Received response from server");
         */
-
-
 
 
         // Use braces to force constructors not to be called at the beginning of the
@@ -327,8 +322,11 @@ public class Mazewar extends JFrame {
 
         IpPacket ipPacket = null;
         try {
+            Random randomGen = new Random(Mazewar.mazeSeed);
+            Point point = new Point(randomGen.nextInt(Mazewar.mazeWidth), randomGen.nextInt(Mazewar.mazeHeight));
+            Player player = new Player(playerName, point, Player.North);
             Socket toNamingServerSocket = new Socket(namingServerHost, namingServerPort);
-            ipPacket = new IpPacket(playerName, InetAddress.getLocalHost().getHostAddress(), selfPort);
+            ipPacket = new IpPacket(playerName, InetAddress.getLocalHost().getHostAddress(), selfPort, player);
             ObjectOutputStream toNamingServer = new ObjectOutputStream(toNamingServerSocket.getOutputStream());
             toNamingServer.writeObject(ipPacket);
             new NamingServerListenerThread(toNamingServerSocket, this).start();
@@ -408,19 +406,19 @@ public class Mazewar extends JFrame {
      and the ClientListenerThread which is responsible for
      listening for events
     */
-    private void startThreads() {
+    public void startThreads() {
 
         //Start a new sender thread
-        new Thread(new ClientSenderThread(sequenceNumber,eventQueue, socketsForBroadcast, incomingQueue, curTimeStamp, waitToResendQueue)).start();
+        new Thread(new ClientSenderThread(sequenceNumber, eventQueue, socketsForBroadcast, incomingQueue, curTimeStamp, waitToResendQueue)).start();
         //Start a new listener thread
         //new Thread(new ClientListenerThread(socketsForBroadcast, clientTable,receivedQueue,displayQueue, incomingQueue,actionHoldingCount)).start();
         new ConfirmationBroadcast(sequenceNumber, confirmationQueue, socketsForBroadcast, waitToResendQueue, (BlockingQueue) incomingQueue).start();
-        new ResendThread(150, timeout, waitToResendQueue,socketsForBroadcast).start();
+        new ResendThread(150, timeout, waitToResendQueue, socketsForBroadcast).start();
 
         new IncomingMessageHandleThread(incomingQueue, receivedQueue, waitToResendQueue, confirmationQueue,
                 actionHoldingCount, socketsForBroadcast, curTimeStamp, avoidRepeatenceHelper, numberOfPlayers, playerName, sequenceNumber, this).start();
         new ReceivedThread(receivedQueue, displayQueue, waitToResendQueue, incomingQueue, curTimeStamp, socketsForBroadcast,
-                localPlayers, actionHoldingCount, playerName,sequenceNumber, numberOfPlayers).start();
+                localPlayers, actionHoldingCount, playerName, sequenceNumber, numberOfPlayers).start();
         new DisplayThread(displayQueue, clientTable).start();
         new BulletSender(eventQueue).start();
 
@@ -446,8 +444,8 @@ public class Mazewar extends JFrame {
     }
 }
 
-class ServerSocketHandleThread extends Thread{
-    private MServerSocket serverSocket = null;
+class ServerSocketHandleThread extends Thread {
+    public MServerSocket serverSocket = null;
     Mazewar mazewarClient = null;
     Queue<MPacket> incomingQueue = null;
 
@@ -460,7 +458,7 @@ class ServerSocketHandleThread extends Thread{
     @Override
     public void run() {
         System.out.println("starting server socket handle thread");
-        while(true){
+        while (true) {
             try {
                 /*
                 * start new listener for each new player connection request
@@ -490,26 +488,26 @@ class NamingServerListenerThread extends Thread {
         System.out.println("starting naming server listener thread");
         try {
             ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+
             while (true) {
                 IpBroadCastPacket result = (IpBroadCastPacket) objectInputStream.readObject();
 
                 if (result.isQuit == true) {
                     // this mean the client recieve itself remote clint's quitting message
                     Client quitClient = mazewarClient.clientTable.get(result.quitPlayer);
-                    System.out.println("test result: " +  result.toString());
+                    System.out.println("test result: " + result.toString());
 
                     System.out.println("quit player is :" + result.quitPlayer);
-                    System.out.println("Client table is" +  mazewarClient.clientTable.toString());
+                    System.out.println("Client table is" + mazewarClient.clientTable.toString());
                     System.out.println("quit clients is:" + quitClient.toString());
- 					mazewarClient.quit_player(result.quitPlayer);                    
-					mazewarClient.maze.removeClient(quitClient);
+                    mazewarClient.quit_player(result.quitPlayer);
+                    mazewarClient.maze.removeClient(quitClient);
 
                     System.out.println("maze now have #:" + mazewarClient.numberOfPlayers.get());
- 					mazewarClient.remove_ClientTable(result.quitPlayer);
+                    mazewarClient.remove_ClientTable(result.quitPlayer);
                     System.out.println("Unregister Maze of player!" + result.quitPlayer);
-                }
-
-                else {
+                } else if (result.type == 1) {
                     //adding the client
                     Map<String, IpLocation> clientTable = result.mClientTable;
                     for (Map.Entry<String, IpLocation> e : clientTable.entrySet()) {
@@ -547,10 +545,40 @@ class NamingServerListenerThread extends Thread {
                         }
                     }
 
-
+                    /*
                     if (mazewarClient.numberOfPlayers.get() == 2) {
                         mazewarClient.startRender.set(true);//can start to display
                         System.out.println("start to render");
+                    }*/
+                    mazewarClient.startRender.set(true);
+                } else if (result.type == 2){
+                    // for existing players and want to add the new player into the meachine
+                    //type is 2
+                    Player player = result.players.get(0);
+                    System.out.println("Adding remoteClient: " + player.toString());
+                    RemoteClient remoteClient = new RemoteClient(player.name);
+                    //register maze
+                    mazewarClient.maze.addClientAt(remoteClient, player.point, player.direction);
+                    mazewarClient.clientTable.put(player.name, remoteClient);
+
+                    Map<String, IpLocation> clientTable = result.mClientTable;
+                    for (Map.Entry<String, IpLocation> e : clientTable.entrySet()) {
+
+                        mazewarClient.addNeighbours(e.getKey(), e.getValue());
+                        mazewarClient.add_neighbour_socket_for_sender(e.getKey(), new MSocket((e.getValue()).hostAddress, (e.getValue()).port));
+                        System.out.println("add neighbour socket!");
+
+                    }
+                    
+                }
+                else{
+                    while (true){
+                        if (mazewarClient.displayQueue.isEmpty() && mazewarClient.waitToResendQueue.isEmpty() && mazewarClient.receivedQueue.isEmpty()
+                                && mazewarClient.incomingQueue.isEmpty()){
+                            Player player = new Player(mazewarClient.guiClient.getName(), mazewarClient.guiClient.getPoint(), mazewarClient.guiClient.getOrientation().getDirection());
+                            IpPacket toServer = new IpPacket("","",0,player);
+                            break;
+                        }
                     }
                 }
             }

@@ -23,6 +23,13 @@ public class IpPacket implements Serializable{
         this.isQuit = false;
     }
 
+    public IpPacket(String hostName, String host,int port, Player player) {
+        this.hostName = hostName;
+        this.Ip = new IpLocation(host, port);
+        this.isQuit = false;
+        this.player = player;
+    }
+
     public IpPacket(int statusCode){
         this.statusCode = statusCode;
     }
@@ -46,6 +53,7 @@ class IpBroadCastPacket implements Serializable{
     List<Player> players;
     Boolean isQuit;
     String quitPlayer;
+    int type;
 
     public IpBroadCastPacket(Map cs, List players){
         this.mClientTable = cs;
@@ -55,5 +63,15 @@ class IpBroadCastPacket implements Serializable{
     public IpBroadCastPacket(Boolean isQuit, String quitPlayer){
         this.isQuit = isQuit;
         this.quitPlayer = quitPlayer;
+    }
+
+    public IpBroadCastPacket(int type) {
+        this.type = type;
+    }
+
+    public IpBroadCastPacket( Map<String, IpLocation> mClientTable,List<Player> players, int type) {
+        this.players = players;
+        this.type = type;
+        this.mClientTable = mClientTable;
     }
 }

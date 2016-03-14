@@ -88,4 +88,7 @@ public class Point implements Serializable {
                 /* Impossible */
                 return null;
         }
+        public boolean checkEqual(Point p2){
+                return this.getX() == p2.getX() && this.getY() == p2.getY();
+        }
 }
