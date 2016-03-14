@@ -63,6 +63,8 @@ public class IncomingMessageHandleThread extends Thread {
                     System.out.println("action incoming message: " + headMsg.toString());
                     if (headMsg.name.equals(selfName)) {
                         System.out.println("self action");
+
+
                         PacketInfo packetInfo = new PacketInfo(headMsg);
                         packetInfo.isAck = true;
                         packetInfo.isReleased = false;//cannot release yet!!!!!!!! must be head of received queue to release
@@ -70,7 +72,8 @@ public class IncomingMessageHandleThread extends Thread {
                         if (!receivedQueue.offer(packetInfo)) {
                             assert (1 == 0);
                         }
-                        System.out.println("added to received queue directly: " + headMsg.toString());
+                        // System.out.println("added to received queue directly: " + headMsg.toString());
+
                         //currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);//update timestamp
                         //do not increase lamport clock as in lecture slides
                         continue;//change  to continue
@@ -173,7 +176,7 @@ public class IncomingMessageHandleThread extends Thread {
 
                 case MPacket.RELEASED:
                     //send back ack
-                    if(!headMsg.name.equals(selfName)) {
+                    if (!headMsg.name.equals(selfName)) {
                         sendBackAck(headMsg, MPacket.RECEIVED);
                     }
 
@@ -217,9 +220,9 @@ public class IncomingMessageHandleThread extends Thread {
                     if (headMsg.name.equals(selfName)) {
                         //check to see if we can remove the confirmation msg from the resend queue
                         SenderPacketInfo senderPacketInfo3 = resendQueue.get(headMsg.sequenceNumber);
-                        if(senderPacketInfo3 != null) {
+                        if (senderPacketInfo3 != null) {
                             senderPacketInfo3.getReleasedFrom(selfName);
-                            System.out.println("release!!!!!!:"+ senderPacketInfo3.getReleasedCount);
+                            System.out.println("release!!!!!!:" + senderPacketInfo3.getReleasedCount);
                             if (senderPacketInfo3.getReleasedCount == numOfPlayer.get()) {
 
                                 synchronized (resendQueue) {
@@ -289,7 +292,7 @@ class ReceivedThread extends Thread {
     AtomicInteger curSequenceNum = null;
     Map resendQueue;
     AtomicInteger numOfPlayers = null;
-    Queue incomingQueue= null;
+    Queue incomingQueue = null;
 
     public ReceivedThread(Queue receivedQueue, Queue<MPacket> displayQueue, Map resendQueue, Queue incomingQueue, AtomicInteger curTimeStamp, Map<String, MSocket> neighbourSockets, List<String> localPlayers,
                           AtomicInteger actionHoldingCount, String selfName, AtomicInteger curSequenceNum, AtomicInteger numOfPlayers) {
@@ -310,7 +313,7 @@ class ReceivedThread extends Thread {
     public void run() {
         //get the head of received queue and check whether it is released or not
         //if it is released then don't do anything otherwise send back release message
-        if (Debug.debug) System.out.println("Starting received queue thread: "  + Thread.currentThread().getId());
+        if (Debug.debug) System.out.println("Starting received queue thread: " + Thread.currentThread().getId());
         while (true) {
             PacketInfo peek = (PacketInfo) receivedQueue.peek();
             if (peek == null) {
@@ -320,7 +323,7 @@ class ReceivedThread extends Thread {
             if (!peek.isReleased) {
                 //if not released yet we need to release it when it's head and send back release message
 
-                if(peek.Packet.name.equals(selfName)){
+                if (peek.Packet.name.equals(selfName)) {
                     //send release to itself: !!!!!!!
 
                     MPacket reply = new MPacket(MPacket.RELEASED, 0);
@@ -347,8 +350,7 @@ class ReceivedThread extends Thread {
 
                         }
                     }*/
-                }
-                else {
+                } else {
                     MPacket reply = new MPacket(0, 0);
                     reply.name = selfName;
                     reply.toAckNumber = peek.Packet.sequenceNumber;
@@ -405,8 +407,36 @@ class DisplayThread extends Thread {
         this.clientTable = clientTable;
     }
 
+    public void clientAction(MPacket poll, Client client){
+        if (poll.event == MPacket.UP) {
+            client.forward();
+        }
+        else if (poll.event == MPacket.DOWN) {
+            client.backup();
+        } else if (poll.event == MPacket.LEFT) {
+            client.turnLeft();
+        } else if (poll.event == MPacket.RIGHT) {
+            client.turnRight();
+        } else if (poll.event == MPacket.FIRE) {
+            System.out.println(client.getName() + " about to call fire()");
+            client.fire();
+        } else if (poll.event == MPacket.DIE) {
+            Player newPosition = poll.players[0];
+            Client sourceClient = clientTable.get(poll.players[1].name);
+            //Client destClient = clientTable.get(newPosition.name);
+            client.die(sourceClient, newPosition);
+        } else if (poll.event == MPacket.MOVE_BULLET) {
+            //int prj = received.projectile;
+            String prj = poll.name;
+            client.bullet_move(prj);
+        } else {
+            throw new UnsupportedOperationException();
+        }
+
+    }
+
     public void run() {
-        if (Debug.debug) System.out.println("Starting display queue thread: "  + Thread.currentThread().getId());
+        if (Debug.debug) System.out.println("Starting display queue thread: " + Thread.currentThread().getId());
         Client client = null;
 
         while (true) {
@@ -420,7 +450,12 @@ class DisplayThread extends Thread {
                 client = clientTable.get(poll.name);
                 if (poll.event == MPacket.UP) {
                     client.forward();
-                } else if (poll.event == MPacket.DOWN) {
+                } else if(poll.event == MPacket.PACK){
+                    for(MPacket packet: poll.eventList){
+                        clientAction(packet, client);
+                    }
+                }
+                else if (poll.event == MPacket.DOWN) {
                     client.backup();
                 } else if (poll.event == MPacket.LEFT) {
                     client.turnLeft();

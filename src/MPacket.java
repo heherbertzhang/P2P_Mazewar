@@ -23,11 +23,13 @@ public class MPacket implements Serializable {
     public static final int DIE = 206;
     public static final int MOVE_BULLET = 207;
     public static final int QUIT = 208;
+    public static final int PACK = 209;
     
     
     //These fields characterize the event  
     public int type;
     public int event; 
+    public List<MPacket> eventList;
 
     //The name determines the client that initiated the event
     public String name;
@@ -120,6 +122,10 @@ public class MPacket implements Serializable {
                 break;
             case 208:
                 eventStr = "QUIT";
+                break;
+            case 209:
+                eventStr = "PACK";
+                break;
             case 0:
                 eventStr = "DEFAULT";
                 break;

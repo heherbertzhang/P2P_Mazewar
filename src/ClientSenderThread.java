@@ -1,6 +1,5 @@
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.Queue;
+import java.sql.Time;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -38,17 +37,34 @@ public class ClientSenderThread implements Runnable {
                 System.out.println("eventqueue end!!!!!!!!");
                 */
 
-                MPacket toClient = (MPacket) eventQueue.take();//must declare here as temp variable!!!!!!!!!!!!!!!!!!!
-                //!!!!!!!!!!!!!!!!cannot declare out side since it will be reused that previous value!!!!!!!!!!!!!!!!!
-                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                long startTimeMillis = System.currentTimeMillis();
+                long currentTimeMillis = startTimeMillis;
+                long delta = 0;
+                MPacket toClient = new MPacket(MPacket.ACTION, MPacket.PACK);
+                List<MPacket> eventList = new LinkedList<>();
+                while (delta < 50) {
+                    MPacket temp = (MPacket) eventQueue.take();//must declare here as temp variable!!!!!!!!!!!!!!!!!!!
+                    //!!!!!!!!!!!!!!!!cannot declare out side since it will be reused that previous value!!!!!!!!!!!!!!!!!
+                    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    eventList.add(temp);
+                    currentTimeMillis = System.currentTimeMillis();
+                    delta = currentTimeMillis - startTimeMillis;
+                }
+                if(eventList.size() == 1){
+                    toClient.event = eventList.get(0).event;
 
+                }
+                else {
+                    toClient.eventList = eventList;
+                    // first broadcast
+                    toClient.timestamp = lamportClock.incrementAndGet();
+                    toClient.sequenceNumber = this.squenceNumber.incrementAndGet();
+                }
                 //mSocket.writeObject(toClient);
 
 
-                // first broadcast
-                toClient.timestamp = lamportClock.incrementAndGet();
-                toClient.sequenceNumber = this.squenceNumber.incrementAndGet();
-                ;
+
+
                 System.out.println("Sending " + toClient.toString());
 
                 //Initlize the List for ack
