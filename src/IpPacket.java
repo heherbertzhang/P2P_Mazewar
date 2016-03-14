@@ -32,6 +32,7 @@ public class IpPacket implements Serializable{
 
     public IpPacket(int statusCode){
         this.statusCode = statusCode;
+        isQuit = false;
     }
     public IpPacket(Boolean isQuit, String quitPlayer){
         this.isQuit = isQuit;
