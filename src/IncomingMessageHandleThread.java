@@ -216,6 +216,7 @@ public class IncomingMessageHandleThread extends Thread {
                     //but will not remove it from the queue since only the head of the queue can be removed and
                     //add to the display queue
                     System.out.println("confirmation incoming:" + headMsg.toString() + " confirm " + headMsg.toConfrimSequenceNumber);
+
                     if (headMsg.name.equals(selfName)) {
                         //check to see if we can remove the confirmation msg from the resend queue
                         SenderPacketInfo senderPacketInfo3 = resendQueue.get(headMsg.sequenceNumber);
@@ -233,6 +234,31 @@ public class IncomingMessageHandleThread extends Thread {
                         }
                         setConfirmed(headMsg);
                         break;
+                    }
+                    //piggybacked ack arrived
+                    if(headMsg.toAckNumber != 0){
+                        SenderPacketInfo senderPacketInfo4 = resendQueue.get(headMsg.toAckNumber);
+                        if (senderPacketInfo4 != null) {
+                            if (senderPacketInfo4.packet.type == MPacket.RELEASED) {
+                                //since release message only send to one we can safely remove it
+                                synchronized (resendQueue) {
+                                    resendQueue.remove(headMsg.toAckNumber);
+                                    //System.out.println("!!!!!!!!!!!!!!!!!remove release");
+                                }
+                            }
+                            //check if already acked, do not increase lamport clock TODO
+                            else if (!senderPacketInfo4.isAckedFrom(headMsg.name)) { //ACTION and confirmation and
+                                currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
+                                senderPacketInfo4.acknowledgeReceivedFrom(headMsg.name);
+                                if (senderPacketInfo4.packet.type != MPacket.ACTION &&
+                                        senderPacketInfo4.ackFromAll.isEmpty()) {
+                                    synchronized (resendQueue) {
+                                        resendQueue.remove(headMsg.toAckNumber);
+                                    }
+
+                                }
+                            }
+                        }
                     }
                     //send back ack first always!!!!!!
 
