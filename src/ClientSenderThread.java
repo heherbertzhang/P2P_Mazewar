@@ -60,13 +60,13 @@ public class ClientSenderThread implements Runnable {
                 else {
                     toClient.name = eventList.get(0).name;
                     toClient.eventList = eventList;
-                    // first broadcast
-                    toClient.timestamp = lamportClock.incrementAndGet();
-                    toClient.sequenceNumber = this.squenceNumber.incrementAndGet();
+
                 }
                 //mSocket.writeObject(toClient);
 
-
+                // first broadcast
+                toClient.timestamp = lamportClock.incrementAndGet();
+                toClient.sequenceNumber = this.squenceNumber.incrementAndGet();
 
 
                 System.out.println("Sending " + toClient.toString());
