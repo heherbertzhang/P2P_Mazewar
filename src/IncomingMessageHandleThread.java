@@ -216,13 +216,15 @@ public class IncomingMessageHandleThread extends Thread {
                     System.out.println("confirmation incoming:" + headMsg.toString() + " confirm " + headMsg.toConfrimSequenceNumber);
                     if (headMsg.name.equals(selfName)) {
                         //check to see if we can remove the confirmation msg from the resend queue
-                        SenderPacketInfo senderPacketInfo3 = resendQueue.get(headMsg.toAckNumber);
-                        if (senderPacketInfo3.getReleasedCount == numOfPlayer.get()) {
+                        SenderPacketInfo senderPacketInfo3 = resendQueue.get(headMsg.sequenceNumber);
+                        if(senderPacketInfo3 != null) {
+                            if (senderPacketInfo3.getReleasedCount == numOfPlayer.get()) {
 
-                            synchronized (resendQueue) {
-                                //remove from the resendqueue
-                                System.out.println("remove resend queue when self confirm");
-                                resendQueue.remove(headMsg.toAckNumber);
+                                synchronized (resendQueue) {
+                                    //remove from the resendqueue
+                                    System.out.println("remove resend queue when self confirm");
+                                    resendQueue.remove(headMsg.toAckNumber);
+                                }
                             }
                         }
                         setConfirmed(headMsg);
