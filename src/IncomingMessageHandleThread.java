@@ -225,7 +225,7 @@ public class IncomingMessageHandleThread extends Thread {
                                 synchronized (resendQueue) {
                                     //remove from the resendqueue
                                     System.out.println("remove resend queue when self confirm");
-                                    resendQueue.remove(headMsg.toAckNumber);
+                                    resendQueue.remove(headMsg.sequenceNumber);
                                 }
                             }
                         }
