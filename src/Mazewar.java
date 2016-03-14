@@ -577,8 +577,24 @@ class NamingServerListenerThread extends Thread {
                 }
                 else{
                     while (true){
+                        if(!mazewarClient.displayQueue.isEmpty()){
+                            System.out.println("display queue");
+                            System.out.println(mazewarClient.displayQueue.peek().toString());
+                        }
+                        if(!mazewarClient.waitToResendQueue.isEmpty()){
+                            System.out.println("resendqueue");
+                            for(Map.Entry<Integer, SenderPacketInfo> e : mazewarClient.waitToResendQueue.entrySet()){
+                                System.out.println(e.getValue().packet.toString());
+                            }
+                            System.out.println("resend queueu end");
+                        }
+                        if (!mazewarClient.receivedQueue.isEmpty()){
+                            System.out.println("received queue");
+                            System.out.println(mazewarClient.receivedQueue.peek().toString());
+                        }
                         if (mazewarClient.displayQueue.isEmpty() && mazewarClient.waitToResendQueue.isEmpty() && mazewarClient.receivedQueue.isEmpty()
                                 && mazewarClient.incomingQueue.isEmpty()){
+
                             Player player = new Player(mazewarClient.guiClient.getName(), mazewarClient.guiClient.getPoint(), mazewarClient.guiClient.getOrientation().getDirection());
                             IpPacket toServer = new IpPacket("0","0",0,player);
                             System.out.println("about to reply to server");

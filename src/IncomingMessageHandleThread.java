@@ -191,6 +191,7 @@ public class IncomingMessageHandleThread extends Thread {
 
                                     synchronized (resendQueue) {
                                         //remove from the resendqueue
+                                        System.out.println("remove resend queue");
                                         resendQueue.remove(headMsg.toAckNumber);
                                     }
 
