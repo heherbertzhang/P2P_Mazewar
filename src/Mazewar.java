@@ -497,12 +497,14 @@ class NamingServerListenerThread extends Thread {
                     // this mean the client recieve itself remote clint's quitting message
                     Client quitClient = mazewarClient.clientTable.get(result.quitPlayer);
                     System.out.println("test result: " +  result.toString());
-                    System.out.println("maze" + mazewarClient.numberOfPlayers.get());
+
                     System.out.println("quit player is :" + result.quitPlayer);
                     System.out.println("Client table is" +  mazewarClient.clientTable.toString());
                     System.out.println("quit clients is:" + quitClient.toString());
  					mazewarClient.quit_player(result.quitPlayer);                    
-					quitClient.unregisterMaze();
+					mazewarClient.maze.removeClient(quitClient);
+
+                    System.out.println("maze now have #:" + mazewarClient.numberOfPlayers.get());
  					mazewarClient.remove_ClientTable(result.quitPlayer);
                     System.out.println("Unregister Maze of player!" + result.quitPlayer);
                 }
