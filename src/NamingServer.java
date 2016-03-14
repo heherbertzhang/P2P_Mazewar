@@ -38,12 +38,64 @@ public class NamingServer {
             e.printStackTrace();
         }
         System.out.println("Naming server running at: " + InetAddress.getLocalHost().getHostAddress());
+        new hearbeatThread().start();
         while (listening) {
             if (serverSocket != null) {
                 new NamingServerHandlingThread(serverSocket.accept(), mClientTable, mSocketTable, nameSocketTable).start();
             }
         }
         serverSocket.close();
+    }
+
+    static class hearbeatThread extends Thread {
+        @Override
+        public void run() {
+            while (true) {
+                Socket failed = null;
+                try {
+                    sleep(2000);
+
+                    //broadcast to everyone
+
+                    for (Map.Entry<Socket, InOut> entry : mSocketTable.entrySet()) {
+                        //System.out.println("socket: " + socket.toString());
+                        ObjectOutputStream oos = entry.getValue().oos;
+                        failed = entry.getKey();
+                        oos.writeObject(new IpBroadCastPacket(6));
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    //e.printStackTrace();
+                    System.out.println("heart beat found crash");
+                    // mean someone told server that it need to quit
+
+
+                    String name = null;
+                    for (Map.Entry entry : nameSocketTable.entrySet()){
+                        if(entry.getValue() == failed){
+                            name = (String) entry.getKey();
+                        }
+                    }
+
+                    mSocketTable.remove(failed);
+                    nameSocketTable.remove(name);
+                    mClientTable.remove(name);
+
+                    //broadcast to everyone
+                    for (Map.Entry<Socket, InOut> entry : mSocketTable.entrySet()) {
+                        //System.out.println("socket: " + socket.toString());
+                        ObjectOutputStream oos = entry.getValue().oos;
+                        try {
+                            oos.writeObject(new IpBroadCastPacket(true, name));
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                }
+
+            }
+        }
     }
 
     private static class NamingServerHandlingThread extends Thread {

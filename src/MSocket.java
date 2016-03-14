@@ -150,9 +150,16 @@ public class MSocket{
                 System.out.println(e.getMessage());
                 e.printStackTrace();
             }catch(EOFException e){
+
                 e.printStackTrace();
                 close();
+                try {
+                    throw e;
+                } catch (EOFException e1) {
+                    e1.printStackTrace();
+                }
                 System.out.println("Exiting MSocket");
+
                 //System.exit(0);
             }catch(IOException e){
                 e.printStackTrace();
@@ -161,6 +168,7 @@ public class MSocket{
             }catch(InterruptedException e){
                 e.printStackTrace();
             }
+
         }
      }
 
@@ -320,7 +328,7 @@ public class MSocket{
      NOTE: This method relies on the
      ingress queue being automatically updated by another thread
     */
-    public synchronized Object readObject() throws IOException, ClassNotFoundException{
+    public synchronized Object readObject() throws EOFException, IOException, ClassNotFoundException{
 
         //First check if we are in the grace period
         if((new Date()).getTime() - creationTime.getTime() <

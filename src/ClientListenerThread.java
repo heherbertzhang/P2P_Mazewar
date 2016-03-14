@@ -6,7 +6,7 @@ public class ClientListenerThread implements Runnable {
 
     private MSocket mSocket = null;
     private Queue<MPacket> incomingQueue = null;
-
+    String name = null;
     public ClientListenerThread(Queue<MPacket> incomingQueue, MSocket mSocket) {
 
         this.incomingQueue = incomingQueue;
@@ -19,11 +19,15 @@ public class ClientListenerThread implements Runnable {
 
         if (Debug.debug) System.out.println("Starting ClientListenerThread");
 
+
         while (true) {
             try {
 
 
                 MPacket received = (MPacket) mSocket.readObject();
+                if(name == null){
+                    name = received.name;
+                }
                 /*f(received.type == MPacket.QUITMESSAGE){
                     incomingQueue.add(received);
                     return;
@@ -35,10 +39,13 @@ public class ClientListenerThread implements Runnable {
                 }
 
             } catch (IOException e) {
+                System.out.println("debug: player crasshed, going to deals with it");
+                Mazewar.reportCrash(name);
                 Thread.currentThread().interrupt();
             } catch (ClassNotFoundException e) {
-                System.out.println("debug:");
+                System.out.println("debug: player crasshed, going to deals with it");
                 e.printStackTrace();
+                Mazewar.reportCrash(name);
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
                 System.out.println("debug:");

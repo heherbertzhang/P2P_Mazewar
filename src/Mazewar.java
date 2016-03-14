@@ -234,6 +234,24 @@ public class Mazewar extends JFrame {
         System.exit(0);
     }
 
+    public static void reportCrash(String name) {
+        // Put any network clean-up code you might have here.
+        // (inform other implementations on the network that you have
+        //  left, etc.)
+        try {
+            IpPacket QuitPackat = new IpPacket(true, name);
+            Socket NamingServer = new Socket(namingServerHost, namingServerPort);
+            ObjectOutputStream toNS = new ObjectOutputStream(NamingServer.getOutputStream()); // cannot use that already create one!
+            System.out.println("I am writting to the naming server");
+            toNS.writeObject(QuitPackat);
+
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     /**
      * The place where all the pieces are put together.
@@ -500,18 +518,24 @@ class NamingServerListenerThread extends Thread {
                 if (result.isQuit == true) {
                     // this mean the client recieve itself remote clint's quitting message
                     Client quitClient = mazewarClient.clientTable.get(result.quitPlayer);
-                    System.out.println("test result: " + result.toString());
+                    if(quitClient != null) {
+                        System.out.println("test result: " + result.toString());
 
-                    System.out.println("quit player is :" + result.quitPlayer);
-                    System.out.println("Client table is" + mazewarClient.clientTable.toString());
-                    System.out.println("quit clients is:" + quitClient.toString());
-                    mazewarClient.quit_player(result.quitPlayer);
-                    mazewarClient.maze.removeClient(quitClient);
+                        System.out.println("quit player is :" + result.quitPlayer);
+                        System.out.println("Client table is" + mazewarClient.clientTable.toString());
+                        System.out.println("quit clients is:" + quitClient.toString());
+                        mazewarClient.quit_player(result.quitPlayer);
+                        mazewarClient.maze.removeClient(quitClient);
 
-                    System.out.println("maze now have #:" + mazewarClient.numberOfPlayers.get());
-                    mazewarClient.remove_ClientTable(result.quitPlayer);
-                    System.out.println("Unregister Maze of player!" + result.quitPlayer);
-                } else if (result.type == 1) {
+                        System.out.println("maze now have #:" + mazewarClient.numberOfPlayers.get());
+                        mazewarClient.remove_ClientTable(result.quitPlayer);
+                        System.out.println("Unregister Maze of player!" + result.quitPlayer);
+                    }
+                }
+                else if(result.type ==6){
+                    //heart beat do nothing
+                }
+                else if (result.type == 1) {
                     //adding the client
                     Map<String, IpLocation> clientTable = result.mClientTable;
                     for (Map.Entry<String, IpLocation> e : clientTable.entrySet()) {
