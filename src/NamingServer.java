@@ -107,10 +107,13 @@ public class NamingServer {
                     List<Player> playerList = new LinkedList<>();
 
                     //waiting for all other exiting players acks and get their location
+                    System.out.println("ready to wait");
                     for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
                         Socket socket = entry.getKey();
                         ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+                         System.out.println("wait for client");
                         IpPacket acks = (IpPacket) inputStream.readObject();
+                         System.out.println("get the wait response");
                         playerList.add(acks.player);
                     }
 

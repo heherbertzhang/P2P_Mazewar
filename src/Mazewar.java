@@ -577,7 +577,9 @@ class NamingServerListenerThread extends Thread {
                                 && mazewarClient.incomingQueue.isEmpty()){
                             Player player = new Player(mazewarClient.guiClient.getName(), mazewarClient.guiClient.getPoint(), mazewarClient.guiClient.getOrientation().getDirection());
                             IpPacket toServer = new IpPacket("","",0,player);
+                            System.out.write("about to reply to server");
                             objectOutputStream.writeObject(toServer);
+                            System.out.write("reply to server succesfully");
                             break;
                         }
                     }
