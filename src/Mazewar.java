@@ -83,6 +83,8 @@ public class Mazewar extends JFrame {
     static String namingServerHost;
     static int namingServerPort;
     static int selfPort;
+    static ObjectOutputStream toNamingServer;
+    ObjectInputStream fromNamingServer;
 
     public void quit_player(String name) {
         numberOfPlayers.decrementAndGet();
@@ -219,8 +221,8 @@ public class Mazewar extends JFrame {
         //  left, etc.)
         try {
             IpPacket QuitPackat = new IpPacket(true, playerName);
-            Socket NamingServer = new Socket(namingServerHost, namingServerPort);
-            ObjectOutputStream toNS = new ObjectOutputStream(NamingServer.getOutputStream());
+            //Socket NamingServer = new Socket(namingServerHost, namingServerPort);
+            ObjectOutputStream toNS = toNamingServer;
             System.out.println("I am writting to the outputstream");
             toNS.writeObject(QuitPackat);
         } catch (UnknownHostException e) {
@@ -327,7 +329,8 @@ public class Mazewar extends JFrame {
             Player player = new Player(playerName, point, Player.North);
             Socket toNamingServerSocket = new Socket(namingServerHost, namingServerPort);
             ipPacket = new IpPacket(playerName, InetAddress.getLocalHost().getHostAddress(), selfPort, player);
-            ObjectOutputStream toNamingServer = new ObjectOutputStream(toNamingServerSocket.getOutputStream());
+            toNamingServer = new ObjectOutputStream(toNamingServerSocket.getOutputStream());
+            fromNamingServer = new ObjectInputStream(toNamingServerSocket.getInputStream());
             toNamingServer.writeObject(ipPacket);
             new NamingServerListenerThread(toNamingServerSocket, this).start();
         } catch (UnknownHostException e) {
@@ -487,8 +490,8 @@ class NamingServerListenerThread extends Thread {
     public void run() {
         System.out.println("starting naming server listener thread");
         try {
-            ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream objectInputStream = mazewarClient.fromNamingServer;
+            ObjectOutputStream objectOutputStream = mazewarClient.toNamingServer;
 
             while (true) {
                 IpBroadCastPacket result = (IpBroadCastPacket) objectInputStream.readObject();

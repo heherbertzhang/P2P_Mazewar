@@ -121,6 +121,7 @@ public class NamingServer {
                         Socket socket = entry.getKey();
                         ObjectInputStream inputStream = entry.getValue().ooi;
                         System.out.println("wait for client");
+
                         IpPacket acks = (IpPacket) inputStream.readObject();
                         System.out.println("get the wait response");
                         playerList.add(acks.player);
