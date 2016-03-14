@@ -219,6 +219,7 @@ public class IncomingMessageHandleThread extends Thread {
                         SenderPacketInfo senderPacketInfo3 = resendQueue.get(headMsg.sequenceNumber);
                         if(senderPacketInfo3 != null) {
                             senderPacketInfo3.getReleasedFrom(selfName);
+                            System.out.println("release!!!!!!:"+ senderPacketInfo3.getReleasedCount);
                             if (senderPacketInfo3.getReleasedCount == numOfPlayer.get()) {
 
                                 synchronized (resendQueue) {
