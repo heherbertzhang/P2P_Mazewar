@@ -51,6 +51,7 @@ public class NamingServer {
 
         @Override
         public void run(){
+        
             try {
                 ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
                 ObjectOutputStream toClient = new ObjectOutputStream(socket.getOutputStream());
@@ -158,6 +159,7 @@ public class NamingServer {
                     nameSocketTable.put(name, socket);
                     System.out.println("cm size: " + clientMap.size());
                     toClient.writeObject(new IpBroadCastPacket(clientMap, playerList,1));
+                    fromClient.close();
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
