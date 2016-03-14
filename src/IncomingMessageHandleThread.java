@@ -216,7 +216,6 @@ public class IncomingMessageHandleThread extends Thread {
                     //but will not remove it from the queue since only the head of the queue can be removed and
                     //add to the display queue
                     System.out.println("confirmation incoming:" + headMsg.toString() + " confirm " + headMsg.toConfrimSequenceNumber);
-
                     if (headMsg.name.equals(selfName)) {
                         //check to see if we can remove the confirmation msg from the resend queue
                         SenderPacketInfo senderPacketInfo3 = resendQueue.get(headMsg.sequenceNumber);
@@ -234,31 +233,6 @@ public class IncomingMessageHandleThread extends Thread {
                         }
                         setConfirmed(headMsg);
                         break;
-                    }
-                    //piggybacked ack arrived
-                    if(headMsg.toAckNumber != 0){
-                        SenderPacketInfo senderPacketInfo4 = resendQueue.get(headMsg.toAckNumber);
-                        if (senderPacketInfo4 != null) {
-                            if (senderPacketInfo4.packet.type == MPacket.RELEASED) {
-                                //since release message only send to one we can safely remove it
-                                synchronized (resendQueue) {
-                                    resendQueue.remove(headMsg.toAckNumber);
-                                    //System.out.println("!!!!!!!!!!!!!!!!!remove release");
-                                }
-                            }
-                            //check if already acked, do not increase lamport clock TODO
-                            else if (!senderPacketInfo4.isAckedFrom(headMsg.name)) { //ACTION and confirmation and
-                                currentTimeStamp.set(Math.max(currentTimeStamp.get(), headMsg.timestamp) + 1);
-                                senderPacketInfo4.acknowledgeReceivedFrom(headMsg.name);
-                                if (senderPacketInfo4.packet.type != MPacket.ACTION &&
-                                        senderPacketInfo4.ackFromAll.isEmpty()) {
-                                    synchronized (resendQueue) {
-                                        resendQueue.remove(headMsg.toAckNumber);
-                                    }
-
-                                }
-                            }
-                        }
                     }
                     //send back ack first always!!!!!!
 
@@ -288,19 +262,16 @@ public class IncomingMessageHandleThread extends Thread {
 
         replymsg.timestamp = currentTimeStamp.incrementAndGet();
 
-
-        synchronized (mazewarAgent.confirmationQueue) {
-            if (!mazewarAgent.confirmationQueue.isEmpty()) {
-                MPacket packet = mazewarAgent.confirmationQueue.peek();
+        /*
+        if(!mazewarAgent.confirmationQueue.isEmpty()){
+            synchronized (mazewarAgent.confirmationQueue){
+                MPacket packet = mazewarAgent.eventQueue.peek();
                 packet.toAckNumber = headMsg.sequenceNumber;
-                System.out.println("piggybacked!!! ack:" + replymsg.toString());
             }
-            else{
-                socket.writeObject(replymsg);
-                //System.out.println("reply to release:" + replymsg.toString());
-            }
-        }
+        }*/
 
+        socket.writeObject(replymsg);
+        System.out.println("reply to release:" + replymsg.toString());
     }
 
     public void setConfirmed(MPacket headMsg) {
@@ -443,10 +414,11 @@ class DisplayThread extends Thread {
         this.clientTable = clientTable;
     }
 
-    public void clientAction(MPacket poll, Client client) {
+    public void clientAction(MPacket poll, Client client){
         if (poll.event == MPacket.UP) {
             client.forward();
-        } else if (poll.event == MPacket.DOWN) {
+        }
+        else if (poll.event == MPacket.DOWN) {
             client.backup();
         } else if (poll.event == MPacket.LEFT) {
             client.turnLeft();
@@ -485,11 +457,12 @@ class DisplayThread extends Thread {
                 client = clientTable.get(poll.name);
                 if (poll.event == MPacket.UP) {
                     client.forward();
-                } else if (poll.event == MPacket.PACK) {
-                    for (MPacket packet : poll.eventList) {
+                } else if(poll.event == MPacket.PACK){
+                    for(MPacket packet: poll.eventList){
                         clientAction(packet, client);
                     }
-                } else if (poll.event == MPacket.DOWN) {
+                }
+                else if (poll.event == MPacket.DOWN) {
                     client.backup();
                 } else if (poll.event == MPacket.LEFT) {
                     client.turnLeft();
