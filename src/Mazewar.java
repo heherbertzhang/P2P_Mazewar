@@ -492,7 +492,7 @@ class NamingServerListenerThread extends Thread {
 
             while (true) {
                 IpBroadCastPacket result = (IpBroadCastPacket) objectInputStream.readObject();
-
+                System.out.println(result);
                 if (result.isQuit == true) {
                     // this mean the client recieve itself remote clint's quitting message
                     Client quitClient = mazewarClient.clientTable.get(result.quitPlayer);
