@@ -1,0 +1,13 @@
+first: make all
+to clean: make clean
+
+then run Naming Server: java NamingServer <port#>
+then add one client: java Mazewar <Naming Server Host Ip> <Naming server port #> <self port #>
+then a window will ask your name and then the game will start
+
+then we can dynamically join new other player by calling: java Mazewar <Naming Server Host Ip> <Naming server port #> <self port #> 
+notice this new player should have different name. If on same computer, should have different port number as well.
+
+then can dynamically join more. 
+
+to dynamically quit: press q
