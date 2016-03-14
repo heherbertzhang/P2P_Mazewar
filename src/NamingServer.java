@@ -12,9 +12,19 @@ import java.util.*;
 /**
  * Created by herbert on 2016-02-04.
  */
+class InOut {
+    ObjectOutputStream oos;
+    ObjectInputStream ooi;
+
+    public InOut(ObjectOutputStream oos, ObjectInputStream ooi) {
+        this.oos = oos;
+        this.ooi = ooi;
+    }
+}
+
 public class NamingServer {
     static Map<String, IpLocation> mClientTable = new Hashtable<>();
-    static Map<Socket, ObjectOutputStream> mSocketTable = new Hashtable<>();
+    static Map<Socket, InOut> mSocketTable = new Hashtable<>();
     static Map<String, Socket> nameSocketTable = new Hashtable<>();
     static Random randomGen = new Random(Mazewar.mazeSeed);
 
@@ -28,20 +38,21 @@ public class NamingServer {
             e.printStackTrace();
         }
         System.out.println("Naming server running at: " + InetAddress.getLocalHost().getHostAddress());
-        while (listening){
+        while (listening) {
             if (serverSocket != null) {
-                new NamingServerHandlingThread(serverSocket.accept(), mClientTable, mSocketTable,nameSocketTable).start();
+                new NamingServerHandlingThread(serverSocket.accept(), mClientTable, mSocketTable, nameSocketTable).start();
             }
         }
         serverSocket.close();
     }
 
-    private static class NamingServerHandlingThread extends Thread{
+    private static class NamingServerHandlingThread extends Thread {
         private Socket socket = null;
         Map clientMap = null;
-        Map<Socket, ObjectOutputStream> socketTable;
+        Map<Socket, InOut> socketTable;
         Map<String, Socket> nameSocketTable;
-        public NamingServerHandlingThread(Socket socket, Map clientMap, Map<Socket, ObjectOutputStream> socketTable,  Map<String, Socket> nameSocketTable){
+
+        public NamingServerHandlingThread(Socket socket, Map clientMap, Map<Socket, InOut> socketTable, Map<String, Socket> nameSocketTable) {
             this.socket = socket;
             this.clientMap = clientMap;
             this.socketTable = socketTable;
@@ -50,14 +61,14 @@ public class NamingServer {
         }
 
         @Override
-        public void run(){
-        
+        public void run() {
+
             try {
                 ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
                 ObjectOutputStream toClient = new ObjectOutputStream(socket.getOutputStream());
 
                 IpPacket packet = (IpPacket) fromClient.readObject();
-                while(packet == null) {
+                while (packet == null) {
                     packet = (IpPacket) fromClient.readObject();
                 }
 
@@ -70,15 +81,12 @@ public class NamingServer {
                     nameSocketTable.remove(packet.quitPlayer);
 
                     //broadcast to everyone
-                    for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
+                    for (Map.Entry<Socket, InOut> entry : mSocketTable.entrySet()) {
                         //System.out.println("socket: " + socket.toString());
-                        ObjectOutputStream oos = entry.getValue();
-                        oos.writeObject(new IpBroadCastPacket(true,packet.quitPlayer));
+                        ObjectOutputStream oos = entry.getValue().oos;
+                        oos.writeObject(new IpBroadCastPacket(true, packet.quitPlayer));
                     }
-                }
-
-
-                else {
+                } else {
                     // receive someone join
                     String name = packet.hostName;
                     IpLocation Ip = packet.Ip;
@@ -99,9 +107,9 @@ public class NamingServer {
 
                     //broadcast to all except this socket about this new player
                     System.out.println("st size : " + mSocketTable.size());
-                    for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
+                    for (Map.Entry<Socket, InOut> entry : mSocketTable.entrySet()) {
                         System.out.println("socket: " + socket.toString());
-                        ObjectOutputStream oos = entry.getValue();
+                        ObjectOutputStream oos = entry.getValue().oos;
                         oos.writeObject(new IpBroadCastPacket(-1));
                     }
 
@@ -109,30 +117,27 @@ public class NamingServer {
 
                     //waiting for all other exiting players acks and get their location
                     System.out.println("ready to wait");
-                    for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
+                    for (Map.Entry<Socket, InOut> entry : mSocketTable.entrySet()) {
                         Socket socket = entry.getKey();
-                        ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-                         System.out.println("wait for client");
+                        ObjectInputStream inputStream = entry.getValue().ooi;
+                        System.out.println("wait for client");
                         IpPacket acks = (IpPacket) inputStream.readObject();
-                         System.out.println("get the wait response");
+                        System.out.println("get the wait response");
                         playerList.add(acks.player);
                     }
 
 
-
-
-
                     boolean Error = false;
-                    while (true){
+                    while (true) {
                         Error = false;
-                        for (Player p : playerList){
-                            if (p.point.checkEqual(player.point)){
+                        for (Player p : playerList) {
+                            if (p.point.checkEqual(player.point)) {
                                 player.point = new Point(randomGen.nextInt(Mazewar.mazeWidth),
                                         randomGen.nextInt(Mazewar.mazeHeight));
                                 Error = true;
                             }
                         }
-                        if (!Error){
+                        if (!Error) {
                             break;
                         }
                     }
@@ -141,25 +146,23 @@ public class NamingServer {
                     newPlayer.add(player);
                     //broadcast to all except this socket about this new player
                     System.out.println("st size : " + mSocketTable.size());
-                    for (Map.Entry<Socket, ObjectOutputStream> entry : mSocketTable.entrySet()) {
+                    for (Map.Entry<Socket, InOut> entry : mSocketTable.entrySet()) {
                         System.out.println("socket: " + socket.toString());
-                        ObjectOutputStream oos = entry.getValue();
-                        oos.writeObject(new IpBroadCastPacket(newclientMap, newPlayer,2));
+                        ObjectOutputStream oos = entry.getValue().oos;
+                        oos.writeObject(new IpBroadCastPacket(newclientMap, newPlayer, 2));
                     }
 
-                    mSocketTable.put(socket, toClient);//add to broadcast list after broadcast
+                    mSocketTable.put(socket, new InOut(toClient, fromClient));//add to broadcast list after broadcast
 
                     playerList.add(player);
-
-
 
 
                     //new client receive all other players' ip
                     clientMap.put(name, Ip);//put new client before send all others since we need our self
                     nameSocketTable.put(name, socket);
                     System.out.println("cm size: " + clientMap.size());
-                    toClient.writeObject(new IpBroadCastPacket(clientMap, playerList,1));
-                    fromClient.close();
+                    toClient.writeObject(new IpBroadCastPacket(clientMap, playerList, 1));
+                    //fromClient.close();
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
